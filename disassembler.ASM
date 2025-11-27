@@ -1,5 +1,5 @@
-        include 'C:\System\Programs\fasm\INCLUDE\encoding\win1251.inc'
-        include 'C:\System\Programs\fasm\INCLUDE\win32w.inc'
+        include '\encoding\win1251.inc'
+        include '\win32w.inc'
 
         format PE
         entry WinMain

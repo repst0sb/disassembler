@@ -585,7 +585,7 @@ proc POP_REG stru, bt
         ret
 endp
 
-proc INC_ stru, bt
+proc INC_REG stru, bt
         mov           eax, [bt]
         and           eax, 0000_0111b
         mov           edx, [stru]
@@ -600,7 +600,7 @@ proc INC_ stru, bt
 
 endp
 
-proc DEC_ stru, bt
+proc DEC_REG stru, bt
         mov           eax, [bt]
         and           eax, 0000_0111b
         mov           edx, [stru]

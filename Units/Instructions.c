@@ -614,3 +614,47 @@ proc DEC_REG stru, bt
         ret
 
 endp
+
+proc MOV_88 stru
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], 12
+        mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
+        mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
+        mov           [edx + Instructions.optype3], 0
+        mov           eax, STATE_MODRM
+
+        ret
+endp
+
+proc MOV_89 stru
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], 12
+        mov           [edx + Instructions.optype1], SIZE_16 or MEMORY
+        mov           [edx + Instructions.optype2], SIZE_16 or REGISTER
+        mov           [edx + Instructions.optype3], 0
+        mov           eax, STATE_MODRM
+
+        ret
+endp
+
+proc MOV_8A stru
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], 12
+        mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
+        mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
+        mov           [edx + Instructions.optype3], 0
+        mov           eax, STATE_MODRM
+
+        ret
+endp
+
+proc MOV_8B stru
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], 12
+        mov           [edx + Instructions.optype1], SIZE_16 or REGISTER
+        mov           [edx + Instructions.optype2], SIZE_16 or MEMORY
+        mov           [edx + Instructions.optype3], 0
+        mov           eax, STATE_MODRM
+
+        ret
+endp

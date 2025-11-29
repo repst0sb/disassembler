@@ -502,9 +502,9 @@ T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,P
                                      SBB_18,SBB_19,SBB_1A,SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,\
                                      XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39, CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,\
                                      DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG,\
-                                     POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG
+                                     POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, 40 dup 0, MOV_88, MOV_89, MOV_8A, MOV_8B
 T2                           du      "al",0,0,"cl",0,0,"dl",0,0,"bl",0,0,"ah",0,0,"ch",0,0,"dh",0,0,"bh",0,0
 T3                           du      "ax",0,0,"cx",0,0,"dx",0,0,"bx",0,0,"sp",0,0,"bp",0,0,"si",0,0,"di",0,0
-T4                           du      "add",0,0,0,"or",0,0,0,0,"adc",0,0,0,"sbb",0,0,0,"and",0,0,0,"sub",0,0,0,"xor",0,0,0,"cmp",0,0,0,"push",0,0,"pop",0,0,0,"inc",0,0,0,"dec",0,0,0
+T4                           du      "add",0,0,0,"or",0,0,0,0,"adc",0,0,0,"sbb",0,0,0,"and",0,0,0,"sub",0,0,0,"xor",0,0,0,"cmp",0,0,0,"push",0,0,"pop",0,0,0,"inc",0,0,0,"dec",0,0,0,"mov",0,0,0
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0

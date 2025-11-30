@@ -612,7 +612,6 @@ proc DEC_REG stru, bt
         mov           eax, STATE_END
 
         ret
-
 endp
 
 proc MOV_88 stru
@@ -659,6 +658,31 @@ proc MOV_8B stru
         ret
 endp
 
+proc MOV_CONST stru, bt
+        mov           eax, [bt]
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], 12
+        and           eax, 0000_0111b
+        mov           [edx + Instructions.optype1], REGISTER
+        or            [edx + Instructions.optype1], al
+        mov           eax, [bt]
+        and           eax, 0000_1000b
+        cmp           eax, 0000_0000b
+        jne           @F
+        or            [edx + Instructions.optype1], SIZE_8
+        mov           [edx + Instructions.optype2], SIZE_8 or CONST
+        jmp           .EndProc
+@@:
+        or            [edx + Instructions.optype1], SIZE_16
+        mov           [edx + Instructions.optype2], SIZE_16 or CONST
+
+.EndProc:
+        mov           [edx + Instructions.optype3], 0
+        mov           eax, STATE_CONST
+
+        ret
+endp
+
 proc RET_C3 stru
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], 13
@@ -666,6 +690,17 @@ proc RET_C3 stru
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           eax, STATE_END
+
+        ret
+endp
+
+proc INT_CD stru
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], 14
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           eax, STATE_CONST
 
         ret
 endp

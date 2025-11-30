@@ -658,3 +658,14 @@ proc MOV_8B stru
 
         ret
 endp
+
+proc RET_C3 stru
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], 13
+        mov           [edx + Instructions.optype1], 0
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           eax, STATE_END
+
+        ret
+endp

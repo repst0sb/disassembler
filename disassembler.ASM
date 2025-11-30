@@ -328,147 +328,95 @@ proc ModRM uses ebx esi edi, bt, stru
         mov           [numBt], 1
         mov           esi, [bt]
         movzx         eax, byte[esi]
-        mov           ebx, [stru]
-        movzx         edx, byte[ebx + Instructions.optype1]
-        and           edx, 0011_0000b
-        cmp           edx, REGISTER
-        jne            @F
-        and           eax, 0011_1000b
-        shr           eax, 3
-        and           [ebx + Instructions.optype1], 1111_0000b
-        or            [ebx + Instructions.optype1], al
-        jmp           .Optype2
-@@:
-        push          eax
-        and           eax, 1100_0000b
-        cmp           eax, 0000_0000b
-        jnz           @F
-        pop           eax
-        and           eax, 1100_0111b
-        and           [ebx + Instructions.optype1], 0011_0000b
-        or            [ebx + Instructions.optype1], al
-        and           eax, 0000_0111b
-        cmp           eax, 0000_0110b
-        je            .disp1
-        mov           [ebx + Instructions.memSh], 0
-        jmp           .Optype2
 
-.disp1:
-        inc           esi
-        movsx         edi, word[esi]
-        mov           [ebx + Instructions.memSh], edi
-        add           [numBt], 2
-        jmp           .Optype2
-
-@@:
-        cmp           eax, 0100_0000b
-        jne           @F
-        pop           eax
-        and           eax, 1100_0111b
-        and           [ebx + Instructions.optype1], 0011_0000b
-        or            [ebx + Instructions.optype1], al
-        inc           esi
-        movsx         edi, byte[esi]
-        mov           [ebx + Instructions.memSh], edi
-        add           [numBt], 1
-        jmp           .Optype2
-
-@@:
-        cmp           eax, 1000_0000b
-        jne           @F
-        pop           eax
-        and           eax, 1100_0111b
-        and           [ebx + Instructions.optype1], 0011_0000b
-        or            [ebx + Instructions.optype1], al
-        inc           esi
-        movsx         edi, word[esi]
-        mov           [ebx + Instructions.memSh], edi
-        add           [numBt], 2
-        jmp           .Optype2
-
-@@:
-        pop           eax
-        and           eax, 0000_0111b
-        and           [ebx + Instructions.optype1], 1100_0000b
-        or            [ebx + Instructions.optype1], REGISTER
-        and           [ebx + Instructions.optype1], 1111_0000b
-        or            [ebx + Instructions.optype1], al
-
-.Optype2:
-        mov           esi, [bt]
-        mov           eax, [esi]
-        movzx         edx, byte[ebx + Instructions.optype2]
-        and           edx, 0011_0000b
-        cmp           edx, REGISTER
-        jne            @F
-        and           eax, 0011_1000b
-        shr           eax, 3
-        and           [ebx + Instructions.optype2], 1111_0000b
-        or            [ebx + Instructions.optype2], al
-        jmp           .EndProc
-@@:
-        push          eax
-        and           eax, 1100_0000b
-        cmp           eax, 0000_0000b
-        jnz           @F
-        pop           eax
-        and           eax, 1100_0111b
-        and           [ebx + Instructions.optype2], 0011_0000b
-        or            [ebx + Instructions.optype2], al
-        and           eax, 0000_0111b
-        cmp           eax, 0000_0110b
-        je            .disp2
-        mov           [ebx + Instructions.memSh], 0
-        jmp           .EndProc
-
-.disp2:
-        inc           esi
-        movsx         edi, word[esi]
-        mov           [ebx + Instructions.memSh], edi
-        add           [numBt], 2
-        jmp           .EndProc
-
-@@:
-        cmp           eax, 0100_0000b
-        jne           @F
-        pop           eax
-        and           eax, 1100_0111b
-        and           [ebx + Instructions.optype2], 0011_0000b
-        or            [ebx + Instructions.optype2], al
-        inc           esi
-        movsx         edi, byte[esi]
-        mov           [ebx + Instructions.memSh], edi
-        add           [numBt], 1
-        jmp           .EndProc
-
-@@:
-        cmp           eax, 1000_0000b
-        jne           @F
-        pop           eax
-        and           eax, 1100_0111b
-        and           [ebx + Instructions.optype2], 0011_0000b
-        or            [ebx + Instructions.optype2], al
-        inc           esi
-        movsx         edi, word[esi]
-        mov           [ebx + Instructions.memSh], edi
-        add           [numBt], 2
-        jmp           .EndProc
-
-@@:
-        pop           eax
-        and           eax, 0000_0111b
-        and           [ebx + Instructions.optype2], 1100_0000b
-        or            [ebx + Instructions.optype2], REGISTER
-        and           [ebx + Instructions.optype2], 1111_0000b
-        or            [ebx + Instructions.optype2], al
+        stdcall       ProcOp, [stru], esi, Instructions.optype1
+        add           [numBt], al
+        stdcall       ProcOp, [stru], esi, Instructions.optype2
+        add           [numBt], al
 
 .EndProc:
         movzx         eax, byte[numBt]
         ret
 endp
 
-proc ProcOp optypeN
+proc ProcOp uses ebx esi edi, stru, bt, optypeN
 
+        locals
+         numBt        db      0
+        endl
+
+        mov           esi, [bt]
+        movzx         eax, byte[esi]
+        mov           ebx, [stru]
+        mov           edi, [optypeN]
+        movzx         edx, byte[ebx + edi]
+        and           edx, 0011_0000b
+        cmp           edx, REGISTER
+        jne            @F
+        and           eax, 0011_1000b
+        shr           eax, 3
+        and           byte[ebx + edi], 1111_0000b
+        or            [ebx + edi], al
+        jmp           .EndProc
+@@:
+        push          eax
+        and           eax, 1100_0000b
+        cmp           eax, 0000_0000b
+        jnz           @F
+        pop           eax
+        and           eax, 1100_0111b
+        and           byte[ebx + edi], 0011_0000b
+        or            [ebx + edi], al
+        and           eax, 0000_0111b
+        cmp           eax, 0000_0110b
+        je            .disp
+        mov           [ebx + Instructions.memSh], 0
+        jmp           .EndProc
+
+.disp:
+        inc           esi
+        movsx         ecx, word[esi]
+        mov           [ebx + Instructions.memSh], ecx
+        mov           [numBt], 2
+        jmp           .EndProc
+
+@@:
+        cmp           eax, 0100_0000b
+        jne           @F
+        pop           eax
+        and           eax, 1100_0111b
+        and           byte[ebx + edi], 0011_0000b
+        or            [ebx + edi], al
+        inc           esi
+        movsx         ecx, byte[esi]
+        mov           [ebx + Instructions.memSh], ecx
+        mov           [numBt], 1
+        jmp           .EndProc
+
+@@:
+        cmp           eax, 1000_0000b
+        jne           @F
+        pop           eax
+        and           eax, 1100_0111b
+        and           byte[ebx + edi], 0011_0000b
+        or            [ebx + edi], al
+        inc           esi
+        movsx         ecx, word[esi]
+        mov           [ebx + Instructions.memSh], ecx
+        mov           [numBt], 2
+        jmp           .EndProc
+
+@@:
+        pop           eax
+        and           eax, 0000_0111b
+        and           byte[ebx + edi], 1100_0000b
+        or            byte[ebx + edi], REGISTER
+        and           byte[ebx + edi], 1111_0000b
+        or            [ebx + edi], al
+
+.EndProc:
+        movzx         eax,byte[numBt]
+        ret
 endp
 
         include       'Units\Instructions.c'

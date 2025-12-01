@@ -138,7 +138,7 @@ endp
 proc ConstPrint optype, handle, stru
         mov           ebx, [stru]
         mov           eax, [ebx + Instructions.const]
-        stdcall       HexPrint, eax
+        stdcall       HexPrint, eax, disp
         stdcall       WriteStr,disp,[handle]
 
 .EndProc:
@@ -212,7 +212,7 @@ proc MemPrint uses ebx edx, optype, handle, stru
         jmp           .Continue
 
 .Continue:
-        stdcall       HexPrint, eax
+        stdcall       HexPrint, eax, disp
         stdcall       WriteStr,disp,[handle]
 
 .EndProc:
@@ -220,7 +220,8 @@ proc MemPrint uses ebx edx, optype, handle, stru
         ret
 endp
 
-proc HexPrint uses ebx, numHex
+proc HexPrint uses ebx, numHex, string
+        mov           esi, [string]
         mov           ebx, [numHex]
         mov           ecx, 4
 
@@ -231,7 +232,7 @@ proc HexPrint uses ebx, numHex
         sbb           al, $69
         das
         xor           ah, ah
-        mov           [disp+ecx*2], ax
+        mov           [esi+ecx*2], ax
         ror           ebx, 4
         loop          @B
 
@@ -293,12 +294,13 @@ proc Avto uses esi ebx, start, stru
 
 endp
 
-proc Const uses ebx, bt, stru
+proc Const uses ebx esi, bt, stru
 
         locals
          numBt        db      ?
         endl
 
+        mov           esi, [bt]
         mov           ebx, [stru]
         movzx         eax, byte[ebx + Instructions.optype1]
         and           ax, 1100_0000b
@@ -456,12 +458,11 @@ plus                         du      "+",0
 comma                        du      ", ",0
 space                        du      " ",0
 entstr                       dw      13, 10,0
-T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,PUSH_SEG,POP_SEG,OR_08,OR_09,OR_0A,OR_0B,OR_0C,OR_0D,PUSH_SEG,POP_SEG,ADC_10,ADC_11,ADC_12,ADC_13,ADC_14,ADC_15,PUSH_SEG,POP_SEG,\
-                                     SBB_18,SBB_19,SBB_1A,SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,\
-                                     XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39, CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,\
-                                     DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG, PUSH_REG,\
-                                     POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, POP_REG, 40 dup 0, MOV_88, MOV_89, MOV_8A, MOV_8B,36 dup 0,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,\
-                                     MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,0,0,0,RET_C3,0,0,0,0,0,0,0,0,0,INT_CD,50 dup 0
+T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,PUSH_SEG,POP_SEG,OR_08,OR_09,OR_0A,OR_0B,OR_0C,OR_0D,PUSH_SEG,POP_SEG,ADC_10,ADC_11,ADC_12,ADC_13,ADC_14,ADC_15,PUSH_SEG,POP_SEG,SBB_18,SBB_19,SBB_1A,\
+                                     SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39,\
+                                     CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,PUSH_REG,PUSH_REG,PUSH_REG,\
+                                     PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG, 40 dup 0, MOV_88, MOV_89, MOV_8A, MOV_8B,36 dup 0,MOV_CONST,MOV_CONST,MOV_CONST,\
+                                     MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,0,0,0,RET_C3,0,0,0,0,0,0,0,0,0,INT_CD,50 dup 0
 T2                           du      "al",0,0,"cl",0,0,"dl",0,0,"bl",0,0,"ah",0,0,"ch",0,0,"dh",0,0,"bh",0,0
 T3                           du      "ax",0,0,"cx",0,0,"dx",0,0,"bx",0,0,"sp",0,0,"bp",0,0,"si",0,0,"di",0,0
 T4                           du      "add",0,0,0,"or",0,0,0,0,"adc",0,0,0,"sbb",0,0,0,"and",0,0,0,"sub",0,0,0,"xor",0,0,0,"cmp",0,0,0,"push",0,0,"pop",0,0,0,"inc",0,0,0,"dec",0,0,0,"mov",0,0,0,"ret",0,0,0,"int",0,0,0

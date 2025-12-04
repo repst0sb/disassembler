@@ -280,11 +280,11 @@ proc Avto uses esi ebx edi, start, stru
         movzx         ebx, byte[esi]
         mov           edi, [stru]
         cmp           [T1 + ebx*4], 0
-        jne           .Known
+        jne           .Opcode
         stdcall       UNKNOWN, [stru], [esi]
         jmp           .StateModRM
 
-.Known:
+.Opcode:
         stdcall       [T1 + ebx*4], [stru], [esi]
         inc           esi
 
@@ -297,10 +297,16 @@ proc Avto uses esi ebx edi, start, stru
 
 .StateConst:
         cmp           [edi + Instructions.hasImm], 1
-        jne           .EndProc
+        jne           .PostProcess
         stdcall       Const, esi, [stru]
         add           esi, eax
         mov           [edi + Instructions.hasImm], 0
+
+.PostProcess:
+        cmp           [edi + Instructions.PostProcess], 1
+        jne           .EndProc
+        mov           esi, [start]
+        jmp           .Opcode
 
 .EndProc:
         mov           eax, esi
@@ -335,7 +341,7 @@ proc Const uses ebx esi, bt, stru
         ret
 endp
 
-proc ModRM uses ebx esi edi, bt, stru
+proc ModRM uses ebx esi, bt, stru
 
         locals
          numBt        db      ?
@@ -344,9 +350,15 @@ proc ModRM uses ebx esi edi, bt, stru
         mov           [numBt], 1
         mov           esi, [bt]
         movzx         eax, byte[esi]
+        mov           ebx, [stru]
 
         stdcall       ProcOp, [stru], esi, Instructions.optype1
         add           [numBt], al
+
+        movzx         edx,byte[ebx + Instructions.optype2]
+        and           edx, 0011_0000b
+        cmp           edx, CONST
+        je            .EndProc
         stdcall       ProcOp, [stru], esi, Instructions.optype2
         add           [numBt], al
 
@@ -477,11 +489,14 @@ entstr                       dw      13, 10,0
 T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,PUSH_SEG,POP_SEG,OR_08,OR_09,OR_0A,OR_0B,OR_0C,OR_0D,PUSH_SEG,POP_SEG,ADC_10,ADC_11,ADC_12,ADC_13,ADC_14,ADC_15,PUSH_SEG,POP_SEG,SBB_18,SBB_19,SBB_1A,\
                                      SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39,\
                                      CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,PUSH_REG,PUSH_REG,PUSH_REG,\
-                                     PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG, 40 dup 0, MOV_88, MOV_89, MOV_8A, MOV_8B,36 dup 0,MOV_CONST,MOV_CONST,MOV_CONST,\
-                                     MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,0,0,0,RET_C3,0,0,0,0,0,0,0,0,0,INT_CD,50 dup 0
+                                     PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG, 32 dup 0,GRP_80,5 dup 0,XCHG_86,XCHG_87,MOV_88, MOV_89, MOV_8A, MOV_8B,0,0,0,0,\
+                                     XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,24 dup 0,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,\
+                                     MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,0,0,0,RET_C3,0,0,0,0,0,0,0,0,0,\
+                                     INT_CD,50 dup 0
 T2                           du      "al",0,0,"cl",0,0,"dl",0,0,"bl",0,0,"ah",0,0,"ch",0,0,"dh",0,0,"bh",0,0
 T3                           du      "ax",0,0,"cx",0,0,"dx",0,0,"bx",0,0,"sp",0,0,"bp",0,0,"si",0,0,"di",0,0
 T4                           du      "db",0,0,0,0,"add",0,0,0,"or",0,0,0,0,"adc",0,0,0,"sbb",0,0,0,"and",0,0,0,"sub",0,0,0,"xor",0,0,0,"cmp",0,0,0,"rol",0,0,0,"ror",0,0,0,"rcl",0,0,0,"rcr",0,0,0,"shl",0,0,0,"shr",0,0,0,"sar",0,0,0,\
-                                     "test",0,0,"not",0,0,0,"neg",0,0,0,"mul",0,0,0,"imul",0,0,"div",0,0,0,"idiv",0,0,"inc",0,0,0,"dec",0,0,0,"call",0,0,"jmp",0,0,0,"push",0,0,"pop",0,0,0,"mov",0,0,0,"ret",0,0,0,"int",0,0,0
+                                     "test",0,0,"not",0,0,0,"neg",0,0,0,"mul",0,0,0,"imul",0,0,"div",0,0,0,"idiv",0,0,"inc",0,0,0,"dec",0,0,0,"call",0,0,"jmp",0,0,0,"push",0,0,"xchg",0,0,"nop",0,0,0,\
+                                     "pop",0,0,0,"mov",0,0,0,"ret",0,0,0,"int",0,0,0
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0

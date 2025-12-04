@@ -45,8 +45,11 @@ CALL_OPCODE            =       $19
 JMP_OPCODE             =       $1A
 PUSH_OPCODE            =       $1B
 
-POP_OPCODE             =       $1C
-MOV_OPCODE             =       $1D
-RET_OPCODE             =       $1E
-INT_OPCODE             =       $1F
+XCHG_OPCODE            =       $1C
+NOP_OPCODE             =       $1D
+
+POP_OPCODE             =       $1E
+MOV_OPCODE             =       $1F
+RET_OPCODE             =       $20
+INT_OPCODE             =       $21
 

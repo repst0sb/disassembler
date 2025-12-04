@@ -1,10 +1,37 @@
-proc UNKNOWN uses ebx, stru
+proc UNKNOWN stru
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], UNKNOWN_OPCODE
         mov           [edx + Instructions.optype1], SIZE_8 or CONST
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc GRP_80 stru
+        mov           edx, [stru]
+        cmp           [edx + Instructions.PostProcess], 0
+        jne           .PostProcess
+        mov           [edx + Instructions.opcode], ADD_OPCODE
+        mov           [edx + Instructions.optype1], REGISTER
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.PostProcess], 1
+        jmp           .EndProc
+
+.PostProcess:
+        movzx         eax, byte[edx + Instructions.optype1]
+        and           eax, 0000_0111b
+        add           [edx + Instructions.opcode], ax
+        mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
+        mov           [edx + Instructions.optype2], SIZE_8 or CONST
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.PostProcess], 0
+        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.hasImm],1
+
+.EndProc:
         ret
 endp
 
@@ -564,6 +591,48 @@ proc DEC_REG stru, bt
         ret
 endp
 
+proc XCHG_86 stru
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], XCHG_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
+        mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.hasModRM],1
+        ret
+endp
+
+proc XCHG_87 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], XCHG_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_16 or REGISTER
+        mov           [edx + Instructions.optype2], SIZE_16 or MEMORY
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.hasModRM],1
+        ret
+endp
+
+proc XCHG_AX stru, bt
+        mov           eax, [bt]
+        mov           edx, [stru]
+        and           eax, 0000_0111b
+        test          eax, eax
+        jz            .Nop
+        mov           [edx + Instructions.opcode], XCHG_OPCODE
+        mov           [edx + Instructions.optype1], REG_AX
+        mov           [edx + Instructions.optype2], REGISTER or SIZE_16
+        or            [edx + Instructions.optype2], al
+        jmp           .EndProc
+
+.Nop:
+        mov           [edx + Instructions.opcode], NOP_OPCODE
+        mov           [edx + Instructions.optype1], 0
+        mov           [edx + Instructions.optype2], 0
+
+.EndProc:
+        mov           [edx + Instructions.optype3], 0
+        ret
+endp
+
 proc MOV_88 stru
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], MOV_OPCODE
@@ -604,7 +673,7 @@ proc MOV_8B stru
         ret
 endp
 
-proc MOV_CONST stru, bt
+proc MOV_REG_CONST stru, bt
         mov           eax, [bt]
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], MOV_OPCODE

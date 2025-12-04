@@ -11,6 +11,7 @@ MEMORY           =      0010_0000b
 CONST            =      0011_0000b
 SEGMENT_REG      =      0000_1000b
 
+STATE_OPCODE     =      $00
 STATE_MODRM      =      $01
 STATE_CONST      =      $02
 STATE_END        =      $ff
@@ -96,20 +97,32 @@ proc WriteFileProc uses ebx, stru, handle
         mov           ebx, [stru]
         mov           edx, 12
         movzx         eax, word[ebx + Instructions.opcode]
+        push          eax
         mul           edx
         add           eax, T4
         stdcall       WriteStr,eax,[handle]
         stdcall       WriteStr, space, [handle]
 
+.Operand:
         cmp           [ebx + Instructions.optype1], 0
         je            @F
         stdcall       OpPrint,dword[ebx + Instructions.optype1], [handle], [stru]
 
 @@:
         cmp           [ebx + Instructions.optype2], 0
-        je            .EndProc
+        je            @F
         stdcall       WriteStr, comma, [handle]
         stdcall       OpPrint,dword[ebx + Instructions.optype2], [handle], [stru]
+
+@@:
+        pop           eax
+        cmp           eax, UNKNOWN_OPCODE
+        jne           .EndProc
+        stdcall       WriteStr, semicl, [handle]
+        mov           edx,[ebx + Instructions.const]
+        mov           [letter], dx
+        stdcall       WriteStr, letter, [handle]
+
 .EndProc:
         stdcall       WriteStr, entstr, [handle]
         ret
@@ -220,7 +233,7 @@ proc MemPrint uses ebx edx, optype, handle, stru
         ret
 endp
 
-proc HexPrint uses ebx, numHex, string
+proc HexPrint uses ebx esi, numHex, string
         mov           esi, [string]
         mov           ebx, [numHex]
         mov           ecx, 4
@@ -235,7 +248,6 @@ proc HexPrint uses ebx, numHex, string
         mov           [esi+ecx*2], ax
         ror           ebx, 4
         loop          @B
-
         ret
 endp
 
@@ -258,7 +270,7 @@ proc WriteStr str, handle
 .nBytes                       dd      ?
 endp
 
-proc Avto uses esi ebx, start, stru
+proc Avto uses esi ebx edi, start, stru
 
         locals
          state          dd      ?
@@ -266,27 +278,29 @@ proc Avto uses esi ebx, start, stru
 
         mov           esi, [start]
         movzx         ebx, byte[esi]
+        mov           edi, [stru]
         cmp           [T1 + ebx*4], 0
-        je            .Unknown
-        mov           [state], 0
+        jne           .Known
+        stdcall       UNKNOWN, [stru], [esi]
+        jmp           .StateModRM
+
+.Known:
         stdcall       [T1 + ebx*4], [stru], [esi]
-        mov           [state], eax
         inc           esi
-        cmp           [state], STATE_MODRM
-        jne           .Const
+
+.StateModRM:
+        cmp           [edi + Instructions.hasModRM], 1
+        jne           .StateConst
         stdcall       ModRM, esi, [stru]
         add           esi, eax
-        jmp           .EndProc
+        mov           [edi + Instructions.hasModRM], 0
 
-.Const:
-        cmp           [state], STATE_CONST
+.StateConst:
+        cmp           [edi + Instructions.hasImm], 1
         jne           .EndProc
         stdcall       Const, esi, [stru]
         add           esi, eax
-        jmp           .EndProc
-
-.Unknown:
-        inc           esi
+        mov           [edi + Instructions.hasImm], 0
 
 .EndProc:
         mov           eax, esi
@@ -457,6 +471,8 @@ minus                        du      "-",0
 plus                         du      "+",0
 comma                        du      ", ",0
 space                        du      " ",0
+semicl                       du      "; ",0
+letter                       du      " ", 0
 entstr                       dw      13, 10,0
 T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,PUSH_SEG,POP_SEG,OR_08,OR_09,OR_0A,OR_0B,OR_0C,OR_0D,PUSH_SEG,POP_SEG,ADC_10,ADC_11,ADC_12,ADC_13,ADC_14,ADC_15,PUSH_SEG,POP_SEG,SBB_18,SBB_19,SBB_1A,\
                                      SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39,\
@@ -465,6 +481,7 @@ T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,P
                                      MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,MOV_CONST,0,0,0,RET_C3,0,0,0,0,0,0,0,0,0,INT_CD,50 dup 0
 T2                           du      "al",0,0,"cl",0,0,"dl",0,0,"bl",0,0,"ah",0,0,"ch",0,0,"dh",0,0,"bh",0,0
 T3                           du      "ax",0,0,"cx",0,0,"dx",0,0,"bx",0,0,"sp",0,0,"bp",0,0,"si",0,0,"di",0,0
-T4                           du      "add",0,0,0,"or",0,0,0,0,"adc",0,0,0,"sbb",0,0,0,"and",0,0,0,"sub",0,0,0,"xor",0,0,0,"cmp",0,0,0,"push",0,0,"pop",0,0,0,"inc",0,0,0,"dec",0,0,0,"mov",0,0,0,"ret",0,0,0,"int",0,0,0
+T4                           du      "db",0,0,0,0,"add",0,0,0,"or",0,0,0,0,"adc",0,0,0,"sbb",0,0,0,"and",0,0,0,"sub",0,0,0,"xor",0,0,0,"cmp",0,0,0,"rol",0,0,0,"ror",0,0,0,"rcl",0,0,0,"rcr",0,0,0,"shl",0,0,0,"shr",0,0,0,"sar",0,0,0,\
+                                     "test",0,0,"not",0,0,0,"neg",0,0,0,"mul",0,0,0,"imul",0,0,"div",0,0,0,"idiv",0,0,"inc",0,0,0,"dec",0,0,0,"call",0,0,"jmp",0,0,0,"push",0,0,"pop",0,0,0,"mov",0,0,0,"ret",0,0,0,"int",0,0,0
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0

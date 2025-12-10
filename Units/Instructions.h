@@ -53,3 +53,18 @@ MOV_OPCODE             =       $1F
 RET_OPCODE             =       $20
 INT_OPCODE             =       $21
 
+REPE_OPCODE            =       $22
+REPNE_OPCODE           =       $23
+
+MOVSB_OPCODE           =       $24
+MOVSW_OPCODE           =       $25
+CMPSB_OPCODE           =       $26
+CMPSW_OPCODE           =       $27
+SCASB_OPCODE           =       $28
+SCASW_OPCODE           =       $29
+LODSB_OPCODE           =       $2A
+LODSW_OPCODE           =       $2B
+STOSB_OPCODE           =       $2C
+STOSW_OPCODE           =       $2D
+LOCK_OPCODE            =       $2E
+

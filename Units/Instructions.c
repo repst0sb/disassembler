@@ -4,6 +4,7 @@ proc UNKNOWN stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or CONST
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -27,6 +28,7 @@ proc GRP_80 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.PostProcess], 0
         mov           [edx + Instructions.hasModRM],1
         mov           [edx + Instructions.hasImm],1
@@ -81,6 +83,7 @@ proc ADD_04 stru, bt
         mov           [edx + Instructions.optype1], REG_AL
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -91,6 +94,7 @@ proc ADD_05 stru, bt
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -141,6 +145,7 @@ proc OR_0C stru, bt
         mov           [edx + Instructions.optype1], REG_AL
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -151,6 +156,7 @@ proc OR_0D stru, bt
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -201,6 +207,7 @@ proc ADC_14 stru, bt
         mov           [edx + Instructions.optype1], REG_AL
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -211,6 +218,7 @@ proc ADC_15 stru, bt
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -261,6 +269,7 @@ proc SBB_1C stru, bt
         mov           [edx + Instructions.optype1], REG_AL
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -271,6 +280,7 @@ proc SBB_1D stru, bt
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -321,6 +331,7 @@ proc AND_24 stru, bt
         mov           [edx + Instructions.optype1], REG_AL
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -331,6 +342,7 @@ proc AND_25 stru, bt
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -381,6 +393,7 @@ proc SUB_2C stru, bt
         mov           [edx + Instructions.optype1], REG_AL
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -391,6 +404,7 @@ proc SUB_2D stru, bt
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -441,6 +455,7 @@ proc XOR_34 stru, bt
         mov           [edx + Instructions.optype1], REG_AL
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -451,6 +466,7 @@ proc XOR_35 stru, bt
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -501,6 +517,7 @@ proc CMP_3C stru, bt
         mov           [edx + Instructions.optype1], REG_AL
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -511,6 +528,7 @@ proc CMP_3D stru, bt
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -693,6 +711,7 @@ proc MOV_C6 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.PostProcess], 0
         mov           [edx + Instructions.hasModRM],1
         mov           [edx + Instructions.hasImm],1
@@ -724,6 +743,7 @@ proc MOV_REG_CONST stru, bt
         mov           [edx + Instructions.optype2], SIZE_16 or CONST
 
 .EndProc:
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.hasImm],1
         ret
@@ -744,6 +764,7 @@ proc INT_CD stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or CONST
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],0
         mov           [edx + Instructions.hasImm],1
         ret
 endp
@@ -871,6 +892,52 @@ proc JMP_E9 stru, bt
         mov           [edx + Instructions.optype1], SIZE_16 or CONST
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],3
         mov           [edx + Instructions.hasImm],1
         ret
 endp
+
+proc JMP_EB stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JMP_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc JZ_74 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JZ_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc JL_7C stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JL_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc JLE_7E stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JLE_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+

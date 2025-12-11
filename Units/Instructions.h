@@ -68,3 +68,9 @@ STOSB_OPCODE           =       $2C
 STOSW_OPCODE           =       $2D
 LOCK_OPCODE            =       $2E
 
+JZ_OPCODE              =       $2F
+JL_OPCODE              =       $30
+JLE_OPCODE             =       $31
+JB_OPCODE              =       $32
+JBE_OPCODE             =       $33
+

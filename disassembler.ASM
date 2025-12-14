@@ -6,21 +6,30 @@
 
         include         'Units\Instructions.h'
 
-REGISTER         =      0000_0000b
-MEMORY           =      0010_0000b
-CONST            =      0011_0000b
-SEGMENT_REG      =      0000_1000b
+REGISTER         =      0000_0000_0000_0000b
+MEMORY           =      0000_0000_0010_0000b
+CONST            =      0000_0000_0011_0000b
+SEGMENT_REG      =      0000_0000_0000_1000b
 
 STATE_OPCODE     =      $00
 STATE_MODRM      =      $01
 STATE_CONST      =      $02
 STATE_END        =      $ff
 
-SIZE_8           =      0100_0000b
-SIZE_16          =      1000_0000b
+SIZE_8           =      0000_0000_0100_0000b
+SIZE_16          =      0000_0000_1000_0000b
 
-REG_AL           =      0100_0000b
-REG_AX           =      1000_0000b
+REG_AL           =      0000_0000_0100_0000b
+REG_AX           =      0000_0000_1000_0000b
+
+MASK_SIZE        =      0000_0000_1100_0000b
+MASK_OPTYPE      =      0000_0000_0011_0000b
+MASK_OPER        =      0000_0000_0000_0111b
+MASK_SEGREG      =      0000_0000_0000_1000b
+MASK_BP          =      0000_0110b
+MASK_MOD         =      1100_0000b
+MASK_REG         =      0011_1000b
+MASK_MEM         =      0000_0111b
 
 section '.code' code readable writeable executable
 
@@ -130,8 +139,8 @@ proc WriteFileProc uses ebx, stru, handle
 endp
 
 proc OpPrint uses ebx, optype,handle, stru
-        movzx         eax, byte[optype]
-        and           eax, 0011_0000b
+        movzx         eax, word[optype]
+        and           eax, MASK_OPTYPE
         cmp           eax, REGISTER
         jne           .Mem
         stdcall       RegPrint, [optype], [handle], [stru]
@@ -151,8 +160,8 @@ endp
 proc ConstPrint uses ebx, optype, handle, stru
         mov           ebx, [stru]
         mov           eax, [ebx + Instructions.const]
-        mov           edx, [optype]
-        and           edx, 1100_0000b
+        movzx         edx, word[optype]
+        and           edx, MASK_SIZE
         cmp           edx, SIZE_8
         jne           .Size16
         stdcall       HexPrint, eax, oneb, 2
@@ -168,32 +177,32 @@ proc ConstPrint uses ebx, optype, handle, stru
 endp
 
 proc RegPrint uses ebx, optype, handle, stru
-        movzx         eax, byte[optype]
-        and           eax, 0000_1000b
+        movzx         eax, word[optype]
+        and           eax, MASK_SEGREG
         cmp           eax, SEGMENT_REG
         je            .SegReg
-        movzx         eax, byte[optype]
-        and           eax, 1100_0000b
+        movzx         eax, word[optype]
+        and           eax, MASK_SIZE
         cmp           eax, SIZE_8
         jne           @F
-        movzx         eax, byte[optype]
-        and           ax, 0000_0111b
+        movzx         eax, word[optype]
+        and           ax, MASK_OPER
         shl           ax, 3
         add           eax, T2
         stdcall       WriteStr,eax,[handle]
         jmp           .EndProc
 
 @@:
-        movzx         eax, byte[optype]
-        and           ax, 0000_0111b
+        movzx         eax, word[optype]
+        and           ax, MASK_OPER
         shl           ax, 3
         add           eax, T3
         stdcall       WriteStr,eax,[handle]
         jmp           .EndProc
 
 .SegReg:
-        movzx         eax, byte[optype]
-        and           ax, 0000_0111b
+        movzx         eax, word[optype]
+        and           ax, MASK_OPER
         shl           ax, 3
         add           eax, T6
         stdcall       WriteStr,eax,[handle]
@@ -216,16 +225,16 @@ proc MemPrint uses ebx edx, optype, handle, stru
 ;.Mem:
         stdcall       WriteStr,opbr,[handle]
         mov           edx, 12
-        movzx         eax, byte[optype]
-        and           ax, 1100_0111b
-        cmp           ax, 0000_0110b
+        movzx         eax, word[optype]
+        and           ax, MASK_SIZE or MASK_OPER
+        cmp           ax, MASK_BP
         jne           @F
         mov           eax, [ebx + Instructions.memSh]
         jmp           .Continue
 
 @@:
-        movzx         eax, byte[optype]
-        and           ax, 0000_0111b
+        movzx         eax, word[optype]
+        and           ax, MASK_OPER
         mul           edx
         add           eax, T5
         stdcall       WriteStr,eax,[handle]
@@ -340,8 +349,8 @@ proc Const uses ebx esi, bt, stru
 
         mov           esi, [bt]
         mov           ebx, [stru]
-        movzx         eax, byte[ebx + Instructions.optype1]
-        and           ax, 1100_0000b
+        movzx         eax, word[ebx + Instructions.optype1]
+        and           ax, MASK_SIZE
         cmp           ax, SIZE_8
         jne           @F
         movsx         eax, byte[esi]
@@ -373,8 +382,8 @@ proc ModRM uses ebx esi, bt, stru
         stdcall       ProcOp, [stru], esi, Instructions.optype1
         add           [numBt], al
 
-        movzx         edx,byte[ebx + Instructions.optype2]
-        and           edx, 0011_0000b
+        movzx         edx,word[ebx + Instructions.optype2]
+        and           edx, MASK_OPTYPE
         cmp           edx, CONST
         je            .EndProc
         stdcall       ProcOp, [stru], esi, Instructions.optype2
@@ -395,26 +404,26 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         movzx         eax, byte[esi]
         mov           ebx, [stru]
         mov           edi, [optypeN]
-        movzx         edx, byte[ebx + edi]
-        and           edx, 0011_0000b
+        movzx         edx, word[ebx + edi]
+        and           edx, MASK_OPTYPE
         cmp           edx, REGISTER
         jne            @F
-        and           eax, 0011_1000b
+        and           eax, MASK_REG
         shr           eax, 3
-        and           byte[ebx + edi], 1111_0000b
+        and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], al
         jmp           .EndProc
 @@:
         push          eax
-        and           eax, 1100_0000b
+        and           eax, MASK_MOD
         cmp           eax, 0000_0000b
         jnz           @F
         pop           eax
-        and           eax, 1100_0111b
-        and           byte[ebx + edi], 0011_0000b
+        and           eax, MASK_MOD or MASK_MEM
+        and           word[ebx + edi], MASK_OPTYPE
         or            [ebx + edi], al
-        and           eax, 0000_0111b
-        cmp           eax, 0000_0110b
+        and           eax, MASK_MEM
+        cmp           eax, MASK_BP
         je            .disp
         mov           [ebx + Instructions.memSh], 0
         jmp           .EndProc
@@ -430,8 +439,8 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         cmp           eax, 0100_0000b
         jne           @F
         pop           eax
-        and           eax, 1100_0111b
-        and           byte[ebx + edi], 0011_0000b
+        and           eax, MASK_MOD or MASK_MEM
+        and           word[ebx + edi],MASK_OPTYPE
         or            [ebx + edi], al
         inc           esi
         movsx         ecx, byte[esi]
@@ -443,8 +452,8 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         cmp           eax, 1000_0000b
         jne           @F
         pop           eax
-        and           eax, 1100_0111b
-        and           byte[ebx + edi], 0011_0000b
+        and           eax, MASK_MOD or MASK_MEM
+        and           word[ebx + edi], MASK_OPTYPE
         or            [ebx + edi], al
         inc           esi
         movsx         ecx, word[esi]
@@ -454,10 +463,10 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
 
 @@:
         pop           eax
-        and           eax, 0000_0111b
-        and           byte[ebx + edi], 1100_0000b
-        or            byte[ebx + edi], REGISTER
-        and           byte[ebx + edi], 1111_0000b
+        and           eax, MASK_MEM
+        and           word[ebx + edi], MASK_SIZE
+        or            word[ebx + edi], REGISTER
+        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], al
 
 .EndProc:

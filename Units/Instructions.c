@@ -22,8 +22,8 @@ proc GRP_80 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, byte[edx + Instructions.optype1]
-        and           eax, 0000_0111b
+        movzx         eax, word[edx + Instructions.optype1]
+        and           eax, 0000_0000_0000_0111b
         add           [edx + Instructions.opcode], ax
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
@@ -540,7 +540,7 @@ proc PUSH_SEG stru, bt
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], PUSH_OPCODE
         mov           [edx + Instructions.optype1], SIZE_16 or SEGMENT_REG
-        or            [edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], al
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -553,7 +553,7 @@ proc PUSH_REG stru, bt
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], PUSH_OPCODE
         mov           [edx + Instructions.optype1], SIZE_16 or REGISTER
-        or            [edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], al
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -566,7 +566,7 @@ proc POP_SEG stru, bt
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], POP_OPCODE
         mov           [edx + Instructions.optype1], SIZE_16 or SEGMENT_REG
-        or            [edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], al
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -578,7 +578,7 @@ proc POP_REG stru, bt
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], POP_OPCODE
         mov           [edx + Instructions.optype1], SIZE_16 or REGISTER
-        or            [edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], al
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -590,7 +590,7 @@ proc INC_REG stru, bt
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], INC_OPCODE
         mov           [edx + Instructions.optype1], SIZE_16 or REGISTER
-        or            [edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], al
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -603,7 +603,7 @@ proc DEC_REG stru, bt
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], DEC_OPCODE
         mov           [edx + Instructions.optype1], SIZE_16 or REGISTER
-        or            [edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], al
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -638,7 +638,7 @@ proc XCHG_AX stru, bt
         mov           [edx + Instructions.opcode], XCHG_OPCODE
         mov           [edx + Instructions.optype1], REG_AX
         mov           [edx + Instructions.optype2], REGISTER or SIZE_16
-        or            [edx + Instructions.optype2], al
+        or            byte[edx + Instructions.optype2], al
         jmp           .EndProc
 
 .Nop:
@@ -704,8 +704,8 @@ proc MOV_C6 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, byte[edx + Instructions.optype1]
-        and           eax, 0000_0111b
+        movzx         eax, word[edx + Instructions.optype1]
+        and           eax, 0000_0000_0000_0111b
         test          eax, eax
         jnz           .Unknown
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
@@ -730,7 +730,7 @@ proc MOV_REG_CONST stru, bt
         mov           [edx + Instructions.opcode], MOV_OPCODE
         and           eax, 0000_0111b
         mov           [edx + Instructions.optype1], REGISTER
-        or            [edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], al
         mov           eax, [bt]
         and           eax, 0000_1000b
         cmp           eax, 0000_0000b

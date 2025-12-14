@@ -1,9 +1,9 @@
 struct Instructions
 pref            dw       ?
 opcode          dw       ?
-optype1         db       ?
-optype2         db       ?
-optype3         db       ?
+optype1         dw       ?
+optype2         dw       ?
+optype3         dw       ?
 flags           db       ?
 memSh           dd       ?
 hasImm          db       ?

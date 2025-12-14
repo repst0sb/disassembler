@@ -6,26 +6,30 @@
 
         include         'Units\Instructions.h'
 
-REGISTER         =      0000_0000_0000_0000b
-MEMORY           =      0000_0000_0010_0000b
-CONST            =      0000_0000_0011_0000b
-SEGMENT_REG      =      0000_0000_0000_1000b
-
 STATE_OPCODE     =      $00
 STATE_MODRM      =      $01
 STATE_CONST      =      $02
 STATE_END        =      $ff
 
-SIZE_8           =      0000_0000_0100_0000b
-SIZE_16          =      0000_0000_1000_0000b
+REGISTER         =      0000_0000_0000_0000b
+MEMORY           =      0000_0000_0010_0000b
+CONST            =      0000_0000_0011_0000b
+SEGMENT_REG      =      0000_0000_0000_1000b
 
-REG_AL           =      0000_0000_0100_0000b
-REG_AX           =      0000_0000_1000_0000b
+SIGN_CONST       =      0000_0100_0000_0000b
 
-MASK_SIZE        =      0000_0000_1100_0000b
+SIZE_8           =      0000_0001_0000_0000b
+SIZE_16          =      0000_0010_0000_0000b
+SIZE_32          =      0000_0011_0000_0000b
+
+REG_AL           =      0000_0001_0000_0000b
+REG_AX           =      0000_0010_0000_0000b
+
+MASK_SIZE        =      0000_0011_0000_0000b
 MASK_OPTYPE      =      0000_0000_0011_0000b
 MASK_OPER        =      0000_0000_0000_0111b
 MASK_SEGREG      =      0000_0000_0000_1000b
+MASK_SIGN        =      0000_0100_0000_0000b
 MASK_BP          =      0000_0110b
 MASK_MOD         =      1100_0000b
 MASK_REG         =      0011_1000b
@@ -161,6 +165,10 @@ proc ConstPrint uses ebx, optype, handle, stru
         mov           ebx, [stru]
         mov           eax, [ebx + Instructions.const]
         movzx         edx, word[optype]
+        and           edx, MASK_SIGN
+        cmp           edx, SIGN_CONST
+        je            .Size16S
+        movzx         edx, word[optype]
         and           edx, MASK_SIZE
         cmp           edx, SIZE_8
         jne           .Size16
@@ -169,6 +177,24 @@ proc ConstPrint uses ebx, optype, handle, stru
         jmp           .EndProc
 
 .Size16:
+        cmp           edx, SIZE_16
+        jne           .Size32
+
+.Size16S:
+
+        stdcall       HexPrint, eax, twob, 4
+        stdcall       WriteStr,twob,[handle]
+        jmp           .EndProc
+
+.Size32:
+        push          eax
+        and           eax, $FFFF_0000
+        shr           eax, 16
+        stdcall       HexPrint, eax, twob, 4
+        stdcall       WriteStr,twob,[handle]
+        stdcall       WriteStr,colon,[handle]
+        pop           eax
+        and           eax, $0000_FFFF
         stdcall       HexPrint, eax, twob, 4
         stdcall       WriteStr,twob,[handle]
 
@@ -214,19 +240,19 @@ endp
 
 proc MemPrint uses ebx edx, optype, handle, stru
         mov           ebx, [stru]
-;        movzx         eax, byte[optype]
-;        and           eax, 1100_0000b
-;        cmp           eax, SIZE_8
-;        jne           @F
-;        stdcall       WriteStr,bstr,[handle]
-;        jmp           .Mem
-;@@:
-;        stdcall       WriteStr,wstr,[handle]
-;.Mem:
+        movzx         eax, word[optype]
+        and           eax, MASK_SIZE
+        cmp           eax, SIZE_8
+        jne           @F
+        stdcall       WriteStr,bstr,[handle]
+        jmp           .Mem
+@@:
+        stdcall       WriteStr,wstr,[handle]
+.Mem:
         stdcall       WriteStr,opbr,[handle]
         mov           edx, 12
         movzx         eax, word[optype]
-        and           ax, MASK_SIZE or MASK_OPER
+        and           ax, MASK_MOD or MASK_OPER
         cmp           ax, MASK_BP
         jne           @F
         mov           eax, [ebx + Instructions.memSh]
@@ -352,16 +378,24 @@ proc Const uses ebx esi, bt, stru
         movzx         eax, word[ebx + Instructions.optype1]
         and           ax, MASK_SIZE
         cmp           ax, SIZE_8
-        jne           @F
+        jne           .Size_16
         movsx         eax, byte[esi]
         add           [ebx + Instructions.const], eax
         mov           [numBt], 1
         jmp           .EndProc
 
-@@:
+.Size_16:
+        cmp           ax, SIZE_16
+        jne           .Size_32
         movsx         eax, word[esi]
         add           [ebx + Instructions.const], eax
         mov           [numBt], 2
+        jmp           .EndProc
+
+.Size_32:
+        mov           eax, dword[esi]
+        add           [ebx + Instructions.const], eax
+        mov           [numBt], 4
 
 .EndProc:
         movzx         eax, byte[numBt]
@@ -411,7 +445,7 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         and           eax, MASK_REG
         shr           eax, 3
         and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
-        or            [ebx + edi], al
+        or            [ebx + edi], ax
         jmp           .EndProc
 @@:
         push          eax
@@ -420,8 +454,8 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         jnz           @F
         pop           eax
         and           eax, MASK_MOD or MASK_MEM
-        and           word[ebx + edi], MASK_OPTYPE
-        or            [ebx + edi], al
+        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
+        or            [ebx + edi], ax
         and           eax, MASK_MEM
         cmp           eax, MASK_BP
         je            .disp
@@ -440,8 +474,8 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         jne           @F
         pop           eax
         and           eax, MASK_MOD or MASK_MEM
-        and           word[ebx + edi],MASK_OPTYPE
-        or            [ebx + edi], al
+        and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
+        or            [ebx + edi], ax
         inc           esi
         movsx         ecx, byte[esi]
         mov           [ebx + Instructions.memSh], ecx
@@ -453,8 +487,8 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         jne           @F
         pop           eax
         and           eax, MASK_MOD or MASK_MEM
-        and           word[ebx + edi], MASK_OPTYPE
-        or            [ebx + edi], al
+        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
+        or            [ebx + edi], ax
         inc           esi
         movsx         ecx, word[esi]
         mov           [ebx + Instructions.memSh], ecx
@@ -467,7 +501,7 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         and           word[ebx + edi], MASK_SIZE
         or            word[ebx + edi], REGISTER
         and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
-        or            [ebx + edi], al
+        or            [ebx + edi], ax
 
 .EndProc:
         movzx         eax,byte[numBt]
@@ -512,6 +546,7 @@ plus                         du      "+",0
 comma                        du      ", ",0
 space                        du      " ",0
 semicl                       du      "; ",0
+colon                        du      ":",0
 letter                       du      " ", 0
 bstr                         du      "byte",0
 wstr                         du      "word",0
@@ -519,17 +554,18 @@ entstr                       dw      13, 10,0
 T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,PUSH_SEG,POP_SEG,OR_08,OR_09,OR_0A,OR_0B,OR_0C,OR_0D,PUSH_SEG,POP_SEG,ADC_10,ADC_11,ADC_12,ADC_13,ADC_14,ADC_15,PUSH_SEG,POP_SEG,SBB_18,SBB_19,SBB_1A,\
                                      SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39,\
                                      CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,PUSH_REG,PUSH_REG,PUSH_REG,\
-                                     PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG, 16 dup 0,JO_70,0,JB_72,0,JZ_74,JNZ_75,JBE_76,0,JS_78,0,JP_7A,0,JL_7C,0,JLE_7E,0,GRP_80,\
-                                     5 dup 0,XCHG_86,XCHG_87,MOV_88,MOV_89, MOV_8A, MOV_8B,0,0,0,0,\
+                                     PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG, 16 dup 0,JO_70,JNO_71,JB_72,JAE_73,JZ_74,JNZ_75,JBE_76,JA_77,JS_78,JNS_79,\
+                                     JP_7A,JNP_7B,JL_7C,JGE_7D,JLE_7E,JG_7F,GRP_80,5 dup 0,XCHG_86,XCHG_87,MOV_88,MOV_89, MOV_8A, MOV_8B,0,0,0,0,\
                                      XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,12 dup 0,MOVSB_A4,MOVSW_A5,CMPSB_A6,CMPSW_A7,0,0,STOSB_AA,STOSW_AB,LODSB_AC,LODSW_AD,SCASB_AE,SCASW_AF,\
                                      MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,\
                                      MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,0,0,0,RET_C3,0,0,MOV_C6,0,0,0,0,0,0,\
-                                     INT_CD,27 dup 0,JMP_E9,0,JMP_EB,0,0,0,0,LOCK_F0,0,REPNE_F2,REPE_F3,0,0,0,0,0,0,0,0,0,0,0,0
+                                     INT_CD,27 dup 0,JMP_E9,JMP_EA,JMP_EB,0,0,0,0,LOCK_F0,0,REPNE_F2,REPE_F3,0,0,0,0,0,0,0,0,0,0,0,0
 T2                           du      "al",0,0,"cl",0,0,"dl",0,0,"bl",0,0,"ah",0,0,"ch",0,0,"dh",0,0,"bh",0,0
 T3                           du      "ax",0,0,"cx",0,0,"dx",0,0,"bx",0,0,"sp",0,0,"bp",0,0,"si",0,0,"di",0,0
 T4                           du      "db",0,0,0,0,"add",0,0,0,"or",0,0,0,0,"adc",0,0,0,"sbb",0,0,0,"and",0,0,0,"sub",0,0,0,"xor",0,0,0,"cmp",0,0,0,"rol",0,0,0,"ror",0,0,0,"rcl",0,0,0,"rcr",0,0,0,"shl",0,0,0,"shr",0,0,0,"sar",0,0,0,\
                                      "test",0,0,"not",0,0,0,"neg",0,0,0,"mul",0,0,0,"imul",0,0,"div",0,0,0,"idiv",0,0,"inc",0,0,0,"dec",0,0,0,"call",0,0,"jmp",0,0,0,"push",0,0,"xchg",0,0,"nop",0,0,0,\
                                      "pop",0,0,0,"mov",0,0,0,"ret",0,0,0,"int",0,0,0,"repe",0,0,"repne",0,"movsb",0,"movsw",0,"cmpsb",0,"cmpsw",0,"scasb",0,"scasw",0,"lodsb",0,"lodsw",0,"stosb",0,"stosw",0,"lock",0,0,\
-                                     "jz",0,0,0,0,"jl",0,0,0,0,"jle",0,0,0,"jb",0,0,0,0,"jbe",0,0,0
+                                     "jz",0,0,0,0,"jl",0,0,0,0,"jle",0,0,0,"jb",0,0,0,0,"jbe",0,0,0,"jp",0,0,0,0,"jo",0,0,0,0,"js",0,0,0,0,"jnz",0,0,0,"jge",0,0,0,"jg",0,0,0,0,"jae",0,0,0,"ja",0,0,0,0,"jnp",0,0,0,"jno",0,0,0,\
+                                     "jns",0,0,0
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0

@@ -77,4 +77,10 @@ JP_OPCODE              =       $34
 JO_OPCODE              =       $35
 JS_OPCODE              =       $36
 JNZ_OPCODE             =       $37
-
+JGE_OPCODE             =       $38
+JG_OPCODE              =       $39
+JAE_OPCODE             =       $3A
+JA_OPCODE              =       $3B
+JNP_OPCODE             =       $3C
+JNO_OPCODE             =       $3D
+JNS_OPCODE             =       $3E

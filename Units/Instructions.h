@@ -73,4 +73,8 @@ JL_OPCODE              =       $30
 JLE_OPCODE             =       $31
 JB_OPCODE              =       $32
 JBE_OPCODE             =       $33
+JP_OPCODE              =       $34
+JO_OPCODE              =       $35
+JS_OPCODE              =       $36
+JNZ_OPCODE             =       $37
 

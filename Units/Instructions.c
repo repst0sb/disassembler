@@ -941,3 +941,68 @@ proc JLE_7E stru, bt
         ret
 endp
 
+proc JB_72 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JB_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc JBE_76 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JBE_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc JP_7A stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JP_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc JO_70 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JO_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc JS_78 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JS_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc JNZ_75 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], JNZ_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp

@@ -108,10 +108,9 @@ endp
 
 proc WriteFileProc uses ebx, stru, handle
         mov           ebx, [stru]
-        mov           edx, 12
         movzx         eax, word[ebx + Instructions.opcode]
         push          eax
-        mul           edx
+        shl           eax, 4
         add           eax, T4
         stdcall       WriteStr,eax,[handle]
         stdcall       WriteStr, space, [handle]
@@ -559,13 +558,13 @@ T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,P
                                      XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,12 dup 0,MOVSB_A4,MOVSW_A5,CMPSB_A6,CMPSW_A7,0,0,STOSB_AA,STOSW_AB,LODSB_AC,LODSW_AD,SCASB_AE,SCASW_AF,\
                                      MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,\
                                      MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,0,0,0,RET_C3,0,0,MOV_C6,0,0,0,0,0,0,\
-                                     INT_CD,27 dup 0,JMP_E9,JMP_EA,JMP_EB,0,0,0,0,LOCK_F0,0,REPNE_F2,REPE_F3,0,0,0,0,0,0,0,0,0,0,0,0
+                                     INT_CD,18 dup 0,LOOPNZ_E0,LOOPZ_E1,LOOP_E2,0,0,0,0,0,0,JMP_E9,JMP_EA,JMP_EB,0,0,0,0,LOCK_F0,0,REPNE_F2,REPE_F3,0,0,0,0,0,0,0,0,0,0,0,0
 T2                           du      "al",0,0,"cl",0,0,"dl",0,0,"bl",0,0,"ah",0,0,"ch",0,0,"dh",0,0,"bh",0,0
 T3                           du      "ax",0,0,"cx",0,0,"dx",0,0,"bx",0,0,"sp",0,0,"bp",0,0,"si",0,0,"di",0,0
-T4                           du      "db",0,0,0,0,"add",0,0,0,"or",0,0,0,0,"adc",0,0,0,"sbb",0,0,0,"and",0,0,0,"sub",0,0,0,"xor",0,0,0,"cmp",0,0,0,"rol",0,0,0,"ror",0,0,0,"rcl",0,0,0,"rcr",0,0,0,"shl",0,0,0,"shr",0,0,0,"sar",0,0,0,\
-                                     "test",0,0,"not",0,0,0,"neg",0,0,0,"mul",0,0,0,"imul",0,0,"div",0,0,0,"idiv",0,0,"inc",0,0,0,"dec",0,0,0,"call",0,0,"jmp",0,0,0,"push",0,0,"xchg",0,0,"nop",0,0,0,\
-                                     "pop",0,0,0,"mov",0,0,0,"ret",0,0,0,"int",0,0,0,"repe",0,0,"repne",0,"movsb",0,"movsw",0,"cmpsb",0,"cmpsw",0,"scasb",0,"scasw",0,"lodsb",0,"lodsw",0,"stosb",0,"stosw",0,"lock",0,0,\
-                                     "jz",0,0,0,0,"jl",0,0,0,0,"jle",0,0,0,"jb",0,0,0,0,"jbe",0,0,0,"jp",0,0,0,0,"jo",0,0,0,0,"js",0,0,0,0,"jnz",0,0,0,"jge",0,0,0,"jg",0,0,0,0,"jae",0,0,0,"ja",0,0,0,0,"jnp",0,0,0,"jno",0,0,0,\
-                                     "jns",0,0,0
+T4                           du      "db",6 dup 0,"add",5 dup 0,"or",6 dup 0,"adc",5 dup 0,"sbb",5 dup 0,"and",5 dup 0,"sub",5 dup 0,"xor",5 dup 0,"cmp",5 dup 0,"rol",5 dup 0,"ror",5 dup 0,"rcl",5 dup 0,"rcr",5 dup 0,\
+                                     "shl",5 dup 0,"shr",5 dup 0,"sar",5 dup 0,"test",4 dup 0,"not",5 dup 0,"neg",5 dup 0,"mul",5 dup 0,"imul",4 dup 0,"div",5 dup 0,"idiv",4 dup 0,"inc",5 dup 0,"dec",5 dup 0,"call",4 dup 0,\
+                                     "jmp",5 dup 0,"push",4 dup 0,"xchg",4 dup 0,"nop",5 dup 0,"pop",5 dup 0,"mov",5 dup 0,"ret",5 dup 0,"int",5 dup 0,"repe",4 dup 0,"repne",0,0,0,"movsb",0,0,0,"movsw",0,0,0,"cmpsb",0,0,0,\
+                                     "cmpsw",0,0,0,"scasb",0,0,0,"scasw",0,0,0,"lodsb",0,0,0,"lodsw",0,0,0,"stosb",0,0,0,"stosw",0,0,0,"lock",4 dup 0,"jz",6 dup 0,"jl",6 dup 0,"jle",5 dup 0,"jb",6 dup 0,"jbe",5 dup 0,\
+                                     "jp",6 dup 0,"jo",6 dup 0,"js",6 dup 0,"jnz",5 dup 0,"jge",5 dup 0,"jg",6 dup 0,"jae",5 dup 0,"ja",6 dup 0,"jnp",5 dup 0,"jno",5 dup 0,"jns",5 dup 0,"loop",4 dup 0,"loopz",0,0,0,"loopnz",0,0
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0

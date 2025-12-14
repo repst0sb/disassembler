@@ -1094,3 +1094,36 @@ proc JNS_79 stru, bt
         mov           [edx + Instructions.hasImm],1
         ret
 endp
+
+proc LOOP_E2 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], LOOP_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST or SIGN_CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc LOOPZ_E1 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], LOOPZ_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST or SIGN_CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp
+
+proc LOOPNZ_E0 stru, bt
+        mov           edx, [stru]
+        mov           [edx + Instructions.opcode], LOOPNZ_OPCODE
+        mov           [edx + Instructions.optype1], SIZE_8 or CONST or SIGN_CONST
+        mov           [edx + Instructions.optype2], 0
+        mov           [edx + Instructions.optype3], 0
+        mov           [edx + Instructions.const],2
+        mov           [edx + Instructions.hasImm],1
+        ret
+endp

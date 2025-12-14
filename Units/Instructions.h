@@ -84,3 +84,6 @@ JA_OPCODE              =       $3B
 JNP_OPCODE             =       $3C
 JNO_OPCODE             =       $3D
 JNS_OPCODE             =       $3E
+LOOP_OPCODE            =       $3F
+LOOPZ_OPCODE           =       $40
+LOOPNZ_OPCODE          =       $41

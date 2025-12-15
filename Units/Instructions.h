@@ -29,29 +29,28 @@ RCL_OPCODE             =       $0B
 RCR_OPCODE             =       $0C
 SHL_OPCODE             =       $0D
 SHR_OPCODE             =       $0E
-SAR_OPCODE             =       $0F
+XCHG_OPCODE            =       $0F
+SAR_OPCODE             =       $10
 
-TEST_OPCODE            =       $10
-NOT_OPCODE             =       $11
-NEG_OPCODE             =       $12
-MUL_OPCODE             =       $13
-IMUL_OPCODE            =       $14
-DIV_OPCODE             =       $15
-IDIV_OPCODE            =       $16
+TEST_OPCODE            =       $11
+NOP_OPCODE             =       $12
+NOT_OPCODE             =       $13
+NEG_OPCODE             =       $14
+MUL_OPCODE             =       $15
+IMUL_OPCODE            =       $16
+DIV_OPCODE             =       $17
+IDIV_OPCODE            =       $18
 
-INC_OPCODE             =       $17
-DEC_OPCODE             =       $18
-CALL_OPCODE            =       $19
-JMP_OPCODE             =       $1A
-PUSH_OPCODE            =       $1B
+INC_OPCODE             =       $19
+DEC_OPCODE             =       $1A
+CALL_OPCODE            =       $1B
+RET_OPCODE             =       $1C
+JMP_OPCODE             =       $1D
+INT_OPCODE             =       $1E
+PUSH_OPCODE            =       $1F
 
-XCHG_OPCODE            =       $1C
-NOP_OPCODE             =       $1D
-
-POP_OPCODE             =       $1E
-MOV_OPCODE             =       $1F
-RET_OPCODE             =       $20
-INT_OPCODE             =       $21
+POP_OPCODE             =       $20
+MOV_OPCODE             =       $21
 
 REPE_OPCODE            =       $22
 REPNE_OPCODE           =       $23
@@ -87,3 +86,4 @@ JNS_OPCODE             =       $3E
 LOOP_OPCODE            =       $3F
 LOOPZ_OPCODE           =       $40
 LOOPNZ_OPCODE          =       $41
+JCXZ_OPCODE            =       $42

@@ -17,6 +17,7 @@ CONST            =      0000_0000_0011_0000b
 SEGMENT_REG      =      0000_0000_0000_1000b
 
 SIGN_CONST       =      0000_0100_0000_0000b
+FIN_BIT          =      0000_1000_0000_0000b
 
 SIZE_8           =      0000_0001_0000_0000b
 SIZE_16          =      0000_0010_0000_0000b
@@ -24,6 +25,8 @@ SIZE_32          =      0000_0011_0000_0000b
 
 REG_AL           =      0000_0001_0000_0000b
 REG_AX           =      0000_0010_0000_0000b
+
+REG_CL           =      0000_0001_0000_0001b
 
 MASK_SIZE        =      0000_0011_0000_0000b
 MASK_OPTYPE      =      0000_0000_0011_0000b
@@ -231,7 +234,6 @@ proc RegPrint uses ebx, optype, handle, stru
         shl           ax, 3
         add           eax, T6
         stdcall       WriteStr,eax,[handle]
-;        jmp           .EndProc
 
 .EndProc:
         ret
@@ -331,6 +333,7 @@ proc Avto uses esi ebx edi, start, stru
         mov           esi, [start]
         movzx         ebx, byte[esi]
         mov           edi, [stru]
+
         cmp           [T1 + ebx*4], 0
         jne           .Opcode
         stdcall       UNKNOWN, [stru], [esi]
@@ -338,6 +341,8 @@ proc Avto uses esi ebx edi, start, stru
 
 .Opcode:
         stdcall       [T1 + ebx*4], [stru], [esi]
+        cmp           [edi + Instructions.opcode], UNKNOWN_OPCODE
+        je            .StateModRM
         inc           esi
 
 .StateModRM:
@@ -375,6 +380,16 @@ proc Const uses ebx esi, bt, stru
         mov           esi, [bt]
         mov           ebx, [stru]
         movzx         eax, word[ebx + Instructions.optype1]
+        and           eax, MASK_OPTYPE
+        cmp           eax, CONST
+        jne           @F
+        movzx         eax, word[ebx + Instructions.optype1]
+        jmp           .Next
+
+@@:
+        movzx         eax, word[ebx + Instructions.optype2]
+
+.Next:
         and           ax, MASK_SIZE
         cmp           ax, SIZE_8
         jne           .Size_16
@@ -411,10 +426,21 @@ proc ModRM uses ebx esi, bt, stru
         mov           esi, [bt]
         movzx         eax, byte[esi]
         mov           ebx, [stru]
+        movzx         edx,word[ebx + Instructions.optype1]
+        and           edx, FIN_BIT
+        test          edx, edx
+        jnz           .Op2
 
         stdcall       ProcOp, [stru], esi, Instructions.optype1
         add           [numBt], al
 
+.Op2:
+        movzx         edx,word[ebx + Instructions.optype2]
+        test          edx, edx
+        jz            .EndProc
+        and           edx, FIN_BIT
+        test          edx, edx
+        jnz           .EndProc
         movzx         edx,word[ebx + Instructions.optype2]
         and           edx, MASK_OPTYPE
         cmp           edx, CONST
@@ -554,17 +580,18 @@ T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,P
                                      SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39,\
                                      CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,PUSH_REG,PUSH_REG,PUSH_REG,\
                                      PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG, 16 dup 0,JO_70,JNO_71,JB_72,JAE_73,JZ_74,JNZ_75,JBE_76,JA_77,JS_78,JNS_79,\
-                                     JP_7A,JNP_7B,JL_7C,JGE_7D,JLE_7E,JG_7F,GRP_80,5 dup 0,XCHG_86,XCHG_87,MOV_88,MOV_89, MOV_8A, MOV_8B,0,0,0,0,\
+                                     JP_7A,JNP_7B,JL_7C,JGE_7D,JLE_7E,JG_7F,GRP_80,GRP_81,0,GRP_83,0,0,XCHG_86,XCHG_87,MOV_88,MOV_89, MOV_8A, MOV_8B,0,0,0,0,\
                                      XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,12 dup 0,MOVSB_A4,MOVSW_A5,CMPSB_A6,CMPSW_A7,0,0,STOSB_AA,STOSW_AB,LODSB_AC,LODSW_AD,SCASB_AE,SCASW_AF,\
                                      MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,\
                                      MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,0,0,0,RET_C3,0,0,MOV_C6,0,0,0,0,0,0,\
-                                     INT_CD,18 dup 0,LOOPNZ_E0,LOOPZ_E1,LOOP_E2,0,0,0,0,0,0,JMP_E9,JMP_EA,JMP_EB,0,0,0,0,LOCK_F0,0,REPNE_F2,REPE_F3,0,0,0,0,0,0,0,0,0,0,0,0
+                                     INT_CD,0,0,GRP_D0,GRP_D1,GRP_D2,GRP_D3,12 dup 0,LOOPNZ_E0,LOOPZ_E1,LOOP_E2,JCXZ_E3,0,0,0,0,0,JMP_E9,JMP_EA,JMP_EB,0,0,0,0,LOCK_F0,0,REPNE_F2,REPE_F3,0,0,GRP_F6,GRP_F7,0,0,0,0,0,0,GRP_FE,GRP_FF
 T2                           du      "al",0,0,"cl",0,0,"dl",0,0,"bl",0,0,"ah",0,0,"ch",0,0,"dh",0,0,"bh",0,0
 T3                           du      "ax",0,0,"cx",0,0,"dx",0,0,"bx",0,0,"sp",0,0,"bp",0,0,"si",0,0,"di",0,0
 T4                           du      "db",6 dup 0,"add",5 dup 0,"or",6 dup 0,"adc",5 dup 0,"sbb",5 dup 0,"and",5 dup 0,"sub",5 dup 0,"xor",5 dup 0,"cmp",5 dup 0,"rol",5 dup 0,"ror",5 dup 0,"rcl",5 dup 0,"rcr",5 dup 0,\
-                                     "shl",5 dup 0,"shr",5 dup 0,"sar",5 dup 0,"test",4 dup 0,"not",5 dup 0,"neg",5 dup 0,"mul",5 dup 0,"imul",4 dup 0,"div",5 dup 0,"idiv",4 dup 0,"inc",5 dup 0,"dec",5 dup 0,"call",4 dup 0,\
-                                     "jmp",5 dup 0,"push",4 dup 0,"xchg",4 dup 0,"nop",5 dup 0,"pop",5 dup 0,"mov",5 dup 0,"ret",5 dup 0,"int",5 dup 0,"repe",4 dup 0,"repne",0,0,0,"movsb",0,0,0,"movsw",0,0,0,"cmpsb",0,0,0,\
+                                     "shl",5 dup 0,"shr",5 dup 0,"xchg",4 dup 0,"sar",5 dup 0,"test",4 dup 0,"nop",5 dup 0,"not",5 dup 0,"neg",5 dup 0,"mul",5 dup 0,"imul",4 dup 0,"div",5 dup 0,"idiv",4 dup 0,"inc",\
+                                     5 dup 0,"dec",5 dup 0,"call",4 dup 0,"ret",5 dup 0,"jmp",5 dup 0,"int",5 dup 0,"push",4 dup 0,"pop",5 dup 0,"mov",5 dup 0,"repe",4 dup 0,"repne",0,0,0,"movsb",0,0,0,"movsw",0,0,0,"cmpsb",0,0,0,\
                                      "cmpsw",0,0,0,"scasb",0,0,0,"scasw",0,0,0,"lodsb",0,0,0,"lodsw",0,0,0,"stosb",0,0,0,"stosw",0,0,0,"lock",4 dup 0,"jz",6 dup 0,"jl",6 dup 0,"jle",5 dup 0,"jb",6 dup 0,"jbe",5 dup 0,\
-                                     "jp",6 dup 0,"jo",6 dup 0,"js",6 dup 0,"jnz",5 dup 0,"jge",5 dup 0,"jg",6 dup 0,"jae",5 dup 0,"ja",6 dup 0,"jnp",5 dup 0,"jno",5 dup 0,"jns",5 dup 0,"loop",4 dup 0,"loopz",0,0,0,"loopnz",0,0
+                                     "jp",6 dup 0,"jo",6 dup 0,"js",6 dup 0,"jnz",5 dup 0,"jge",5 dup 0,"jg",6 dup 0,"jae",5 dup 0,"ja",6 dup 0,"jnp",5 dup 0,"jno",5 dup 0,"jns",5 dup 0,"loop",4 dup 0,"loopz",0,0,0,"loopnz",0,0,\
+                                     "jcxz",4 dup 0
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0

@@ -66,7 +66,7 @@ proc WinMain
         push          ecx
         push          eax
         push          eax
-        stdcall       Avto, ebx, Inst
+        stdcall       Avto, ebx, Inst, ecx
         mov           ebx, eax
         pop           eax
         stdcall       WriteFileProc, Inst, eax
@@ -85,15 +85,17 @@ proc WinMain
 .nBytes                       dd      ?
 endp
 
-proc ReadFileProc, NameBIN
+proc ReadFileProc uses ebx, NameBIN
         invoke        CreateFile,[NameBIN], GENERIC_READ , FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
 
         push          eax
         push          eax
         invoke        GetFileSize, eax, NULL
+        mov           ebx, eax
+        add           ebx, 16
         mov           [.FileSize], eax
         invoke        GetProcessHeap
-        invoke        HeapAlloc, eax, HEAP_ZERO_MEMORY, [.FileSize]
+        invoke        HeapAlloc, eax, HEAP_ZERO_MEMORY, ebx
         mov           [Mas], eax
         pop           eax
         invoke        ReadFile, eax, [Mas], [.FileSize],.nBytes, NULL
@@ -324,7 +326,7 @@ proc WriteStr str, handle
 .nBytes                       dd      ?
 endp
 
-proc Avto uses esi ebx edi, start, stru
+proc Avto uses esi ebx edi, start, stru, endMas
 
         locals
          state          dd      ?
@@ -336,6 +338,8 @@ proc Avto uses esi ebx edi, start, stru
 
         cmp           [T1 + ebx*4], 0
         jne           .Opcode
+
+.Unknown:
         stdcall       UNKNOWN, [stru], [esi]
         jmp           .StateModRM
 
@@ -366,6 +370,12 @@ proc Avto uses esi ebx edi, start, stru
         jmp           .Opcode
 
 .EndProc:
+        cmp           esi, [endMas]
+        jle           .End
+        mov           esi, [start]
+        jmp           .Unknown
+
+.End:
         mov           eax, esi
         ret
 

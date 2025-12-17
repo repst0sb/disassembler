@@ -1,10 +1,11 @@
         include '\encoding\win1251.inc'
         include '\win32w.inc'
 
-        format PE
+        format PE GUI 4.0
         entry WinMain
 
         include         'Units\Instructions.h'
+        include         'Units\window.h'
 
 STATE_OPCODE     =      $00
 STATE_MODRM      =      $01
@@ -43,11 +44,16 @@ section '.code' code readable writeable executable
 proc WinMain
         invoke        GetCommandLine
         invoke        CommandLineToArgvW, eax, .argvNum
-        push          eax
+;        push          eax
         cmp           [.argvNum], 3
-        jne           .EndProc
-        mov           ebx, eax
+        ja            .EndProc
+        je            @F
+        stdcall       Window
+        jmp           .EndProc
 
+
+@@:
+        mov           ebx, eax
         stdcall       ReadFileProc, [ebx+4]
         mov           edi, eax
         mov           ecx, eax
@@ -544,32 +550,12 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
 endp
 
         include       'Units\Instructions.c'
+        include         'Units\window.c'
 
 section '.data' data readable writeable
 
-Mas                          dd      ?
-Inst                         Instructions
-
-section '.idata' data import readable writeable
-
-library kernel, 'kernel32.dll',\
-        shell, 'shell32.dll'
-  
-import kernel,\
-            GetProcessHeap, 'GetProcessHeap',\
-            HeapAlloc,  'HeapAlloc',\
-            HeapFree, 'HeapFree',\
-            CreateFile, 'CreateFileW',\
-            GetFileSize, 'GetFileSize',\
-            ReadFile, 'ReadFile',\
-            WriteFile, 'WriteFile',\
-            CloseHandle, 'CloseHandle',\
-            GetCommandLine, 'GetCommandLineW',\
-            LocalFree, 'LocalFree',\
-            ExitProcess, 'ExitProcess'
-
-import shell,\
-            CommandLineToArgvW, 'CommandLineToArgvW'
+        include         'Units\window.di'
+        include         'Units\window.du'
 
 twob                         du      "$0000",0
 oneb                         du      "$00", 0
@@ -605,3 +591,41 @@ T4                           du      "db",6 dup 0,"add",5 dup 0,"or",6 dup 0,"ad
                                      "jcxz",4 dup 0
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0
+
+Mas                          dd      ?
+Inst                         Instructions
+
+section '.idata' data import readable writeable
+
+library kernel, 'kernel32.dll',\
+        shell, 'shell32.dll',\
+        user, 'user32.dll',\
+        gdi, 'GDI32.DLL'
+  
+import kernel,\
+            GetProcessHeap, 'GetProcessHeap',\
+            HeapAlloc,  'HeapAlloc',\
+            HeapFree, 'HeapFree',\
+            CreateFile, 'CreateFileW',\
+            GetFileSize, 'GetFileSize',\
+            ReadFile, 'ReadFile',\
+            WriteFile, 'WriteFile',\
+            CloseHandle, 'CloseHandle',\
+            GetCommandLine, 'GetCommandLineW',\
+            LocalFree, 'LocalFree',\
+            GetModuleHandle,'GetModuleHandleA',\
+            ExitProcess, 'ExitProcess'
+
+import shell,\
+            CommandLineToArgvW, 'CommandLineToArgvW'
+
+import user,\
+            RegisterClass,'RegisterClassW',\
+            CreateWindowEx,'CreateWindowExW',\
+            DefWindowProc,'DefWindowProcW',\
+            LoadCursor,'LoadCursorW',\
+            GetMessage,'GetMessageW',\
+            DispatchMessage,'DispatchMessageW',\
+            PostQuitMessage,'PostQuitMessage'
+
+

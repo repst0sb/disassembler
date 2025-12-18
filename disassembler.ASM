@@ -44,7 +44,7 @@ section '.code' code readable writeable executable
 proc WinMain
         invoke        GetCommandLine
         invoke        CommandLineToArgvW, eax, .argvNum
-;        push          eax
+        push          eax
         cmp           [.argvNum], 3
         ja            .EndProc
         je            @F
@@ -613,7 +613,7 @@ import kernel,\
             CloseHandle, 'CloseHandle',\
             GetCommandLine, 'GetCommandLineW',\
             LocalFree, 'LocalFree',\
-            GetModuleHandle,'GetModuleHandleA',\
+            GetModuleHandle,'GetModuleHandleW',\
             ExitProcess, 'ExitProcess'
 
 import shell,\
@@ -624,8 +624,28 @@ import user,\
             CreateWindowEx,'CreateWindowExW',\
             DefWindowProc,'DefWindowProcW',\
             LoadCursor,'LoadCursorW',\
+            LoadMenu,'LoadMenuW',\
             GetMessage,'GetMessageW',\
             DispatchMessage,'DispatchMessageW',\
+            GetClientRect,'GetClientRect',\
+            SendMessage,'SendMessageW',\
+            MoveWindow,'MoveWindow',\
+            SetFocus,'SetFocus',\
+            TranslateMessage,'TranslateMessage',\
             PostQuitMessage,'PostQuitMessage'
 
+import gdi,\
+            CreateFont,'CreateFontW',\
+            DeleteObject,'DeleteObject'
 
+section '.rsrc' resource data readable
+directory RT_MENU,menus
+
+resource menus,\
+           IDR_MENU,LANG_ENGLISH+SUBLANG_DEFAULT,main_menu
+
+  menu main_menu
+       menuitem '&File',0,MFR_POPUP
+                menuitem '&Input',IDM_INPUT
+                menuitem 'Output',IDM_OUTPUT,MFR_END
+       menuitem '&Exit',IDM_EXIT,MFR_END

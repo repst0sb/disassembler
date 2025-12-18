@@ -1,0 +1,4 @@
+edithWnd                     dd      ?
+editFont                     dd      ?
+
+

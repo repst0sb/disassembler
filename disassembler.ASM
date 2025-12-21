@@ -44,22 +44,28 @@ section '.code' code readable writeable executable
 proc WinMain
         invoke        GetCommandLine
         invoke        CommandLineToArgvW, eax, .argvNum
+        mov           ebx, eax
         push          eax
         cmp           [.argvNum], 3
         ja            .EndProc
-        je            @F
+        je            .Consol
         stdcall       Window
-        jmp           .EndProc
+        jmp           @F
 
+
+.Consol:
+        mov           eax, [ebx+4]
+        mov           [FileBin], eax
+        mov           eax, [ebx+8]
+        mov           [FileTxt], eax
 
 @@:
-        mov           ebx, eax
-        stdcall       ReadFileProc, [ebx+4]
+        stdcall       ReadFileProc, [FileBin]
         mov           edi, eax
         mov           ecx, eax
         add           ecx, [Mas]
         push          ecx
-        invoke        CreateFile, [ebx+8], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
+        invoke        CreateFile, [FileTxt], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
         test          edi,  edi
         jz            .EndProc
         push          eax
@@ -600,7 +606,8 @@ section '.idata' data import readable writeable
 library kernel, 'kernel32.dll',\
         shell, 'shell32.dll',\
         user, 'user32.dll',\
-        gdi, 'GDI32.DLL'
+        gdi, 'GDI32.DLL',\
+        comdlg, 'comdlg32.dll'
   
 import kernel,\
             GetProcessHeap, 'GetProcessHeap',\
@@ -637,6 +644,9 @@ import user,\
 import gdi,\
             CreateFont,'CreateFontW',\
             DeleteObject,'DeleteObject'
+
+import comdlg,\
+            GetOpenFileName, 'GetOpenFileNameW'
 
 section '.rsrc' resource data readable
 directory RT_MENU,menus

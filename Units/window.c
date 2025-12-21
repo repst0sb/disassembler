@@ -54,9 +54,13 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
         je            .wmDestroy
         jmp           .defwndproc
 .input:
+        invoke        GetOpenFileName, ofn1
+        mov           [FileBin], szFileBin
         jmp           .EndProc
 
 .output:
+        invoke        GetOpenFileName, ofn2
+        mov           [FileTxt], szFileTxt
         jmp           .EndProc
 
 .wmDestroy:

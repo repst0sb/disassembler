@@ -1,4 +1,7 @@
 edithWnd                     dd      ?
 editFont                     dd      ?
+FileBin                      dd      ?
+FileTxt                      dd      ?
+
 
 

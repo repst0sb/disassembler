@@ -56,11 +56,26 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
 .input:
         invoke        GetOpenFileName, ofn1
         mov           [FileBin], szFileBin
+        invoke        SendMessage,[edithWnd],WM_SETTEXT,0,0
+        stdcall       Start, [edithWnd]
         jmp           .EndProc
 
 .output:
         invoke        GetOpenFileName, ofn2
         mov           [FileTxt], szFileTxt
+        invoke        GetWindowTextLength,[edithWnd]
+        mov           ebx, eax
+        inc           ebx
+        invoke        GetProcessHeap
+        invoke        HeapAlloc, eax, HEAP_ZERO_MEMORY, ebx
+        mov           edi, eax
+        invoke        GetWindowText,[edithWnd], edi, ebx
+        invoke        CreateFile, [FileTxt], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
+        push          eax
+        invoke        WriteFile, eax , bom, 2,.nBytes, NULL
+        pop           eax
+        shl           ebx, 1
+        invoke        WriteFile, eax, edi,ebx , .nBytes, NULL
         jmp           .EndProc
 
 .wmDestroy:
@@ -70,6 +85,8 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
 
 .EndProc:
         ret
+
+.nBytes                       dd      ?
 endp
 
 proc Window

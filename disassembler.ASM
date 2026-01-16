@@ -50,7 +50,7 @@ proc WinMain
         ja            .EndProc
         je            .Consol
         stdcall       Window
-        jmp           @F
+        jmp           .EndProc
 
 
 .Consol:
@@ -58,35 +58,10 @@ proc WinMain
         mov           [FileBin], eax
         mov           eax, [ebx+8]
         mov           [FileTxt], eax
-
-@@:
-        stdcall       ReadFileProc, [FileBin]
-        mov           edi, eax
-        mov           ecx, eax
-        add           ecx, [Mas]
-        push          ecx
         invoke        CreateFile, [FileTxt], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
-        test          edi,  edi
-        jz            .EndProc
-        push          eax
-        invoke        WriteFile, eax , bom, 2,.nBytes, NULL
-        pop           eax
-        mov           ebx, [Mas]
-        pop           ecx
-
-.loop:
-        push          ecx
-        push          eax
-        push          eax
-        stdcall       Avto, ebx, Inst, ecx
         mov           ebx, eax
-        pop           eax
-        stdcall       WriteFileProc, Inst, eax
-        pop           eax
-        pop           ecx
-        cmp           ebx, ecx
-        jb            .loop
-        jmp           .EndProc
+        invoke        WriteFile, eax , bom, 2,.nBytes, NULL
+        stdcall       Start, ebx
 
 .EndProc:
         pop           eax
@@ -95,6 +70,39 @@ proc WinMain
 
 .argvNum                      dd      ?
 .nBytes                       dd      ?
+endp
+
+proc Start handle
+        stdcall       ReadFileProc, [FileBin]
+        mov           edi, eax
+        mov           ecx, eax
+        add           ecx, [Mas]
+;        push          ecx
+;        invoke        CreateFile, [FileTxt], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
+        test          edi,  edi
+        jz            .EndProc
+;        push          eax
+;        invoke        WriteFile, eax , bom, 2,.nBytes, NULL
+;        pop           eax
+        mov           ebx, [Mas]
+;        pop           ecx
+        mov           eax, [handle]
+
+.loop:
+        push          ecx eax
+        stdcall       Avto, ebx, Inst, ecx
+        mov           ebx, eax
+        pop           eax ecx
+        push          ecx eax
+        stdcall       WriteFileProc, Inst, eax
+        pop           eax ecx
+        cmp           ebx, ecx
+        jb            .loop
+
+.EndProc:
+        ret
+
+
 endp
 
 proc ReadFileProc uses ebx, NameBIN
@@ -319,19 +327,29 @@ proc HexPrint uses ebx esi, numHex, string, num
         ret
 endp
 
-proc WriteStr str, handle
-        mov           eax, [str]
+proc WriteStr uses ebx, str, handle
+        mov           ebx, [str]
+        mov           eax, [handle]
+        cmp           eax, [edithWnd]
+        je            .WriteToWindow
+
+.WriteToFile:
         xor           ecx, ecx
 .loop:
-        mov           dx, [eax + ecx*2]
+        mov           dx, [ebx + ecx*2]
         test          dx, dx
         je            .EndProc
-        lea           edx, [eax + ecx*2]
-        push          eax ecx
+        lea           edx, [ebx + ecx*2]
+        push          ecx
         invoke        WriteFile, [handle],edx, 2,.nBytes, NULL
-        pop           ecx eax
+        pop           ecx
         inc           ecx
         jmp           .loop
+        jmp           .EndProc
+
+.WriteToWindow:
+        invoke        SendMessage, [handle], EM_SETSEL, -1, -1
+        invoke        SendMessage, [handle], EM_REPLACESEL,FALSE, ebx
 .EndProc:
         ret
 
@@ -639,6 +657,8 @@ import user,\
             MoveWindow,'MoveWindow',\
             SetFocus,'SetFocus',\
             TranslateMessage,'TranslateMessage',\
+            GetWindowTextLength , 'GetWindowTextLengthW',\
+            GetWindowText, 'GetWindowTextW',\
             PostQuitMessage,'PostQuitMessage'
 
 import gdi,\

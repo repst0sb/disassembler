@@ -21,7 +21,7 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
         or            eax,eax
         jz            .failed
         mov           [edithWnd],eax
-        invoke        CreateFont,99,0,0,0,0,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_RASTER_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,FIXED_PITCH+FF_DONTCARE,NULL
+        invoke        CreateFont,16,0,0,0,0,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_RASTER_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,FIXED_PITCH+FF_DONTCARE,NULL
         or            eax,eax
         jz            .failed
         mov           [editFont],eax
@@ -57,7 +57,7 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
         invoke        GetOpenFileName, ofn1
         mov           [FileBin], szFileBin
         invoke        SendMessage,[edithWnd],WM_SETTEXT,0,0
-        stdcall       Start, [edithWnd]
+        stdcall       Start, [edithWnd], flag
         jmp           .EndProc
 
 .output:
@@ -97,6 +97,9 @@ proc Window
         invoke        RegisterClass, wc
 
         invoke        LoadMenu,[wc.hInstance],IDR_MENU
+        push          eax
+        invoke        CheckMenuRadioItem,eax,IDM_MODE_16,IDM_MODE_32,IDM_MODE_16,MF_BYCOMMAND
+        pop           eax
         invoke        CreateWindowEx,0,_class,_title,WS_VISIBLE+WS_OVERLAPPEDWINDOW+WS_MAXIMIZE ,0,0,500,500,NULL,eax,[wc.hInstance],NULL
 
 .msgLoop:

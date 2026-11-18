@@ -7,9 +7,12 @@
         include         'Units\Instructions.h'
         include         'Units\window.h'
 
-STATE_OPCODE     =      $00
-STATE_MODRM      =      $01
-STATE_CONST      =      $02
+STATE_16         =      $01
+STATE_32         =      $02
+
+STATE_OPCODE     =      $10
+STATE_MODRM      =      $11
+STATE_CONST      =      $12
 STATE_END        =      $ff
 
 REGISTER         =      0000_0000_0000_0000b
@@ -20,6 +23,7 @@ SEGMENT_REG      =      0000_0000_0000_1000b
 SIGN_CONST       =      0000_0100_0000_0000b
 FIN_BIT          =      0000_1000_0000_0000b
 
+SIZE_DEF         =      0000_0010_0000_0000b
 SIZE_8           =      0000_0001_0000_0000b
 SIZE_16          =      0000_0010_0000_0000b
 SIZE_32          =      0000_0011_0000_0000b
@@ -46,24 +50,46 @@ proc WinMain
         invoke        CommandLineToArgvW, eax, .argvNum
         mov           ebx, eax
         push          eax
-        cmp           [.argvNum], 3
+        mov           [flag], STATE_16
+        mov           edx, 1
+        cmp           [.argvNum], 4
         ja            .EndProc
+        je            @F
+        cmp           [.argvNum], 3
         je            .Consol
         stdcall       Window
         jmp           .EndProc
 
+@@:
+        mov           ecx, [ebx+4*edx]
+        push          edx
+        stdcall       wStringToNum, ecx
+        pop           edx
+        inc           edx
+        cmp           eax, 16
+        jne           .32bit
+        mov           [flag],  STATE_16
+        jmp           .Consol
+
+.32bit:
+        cmp           eax, 32
+        jne           .EndProc
+        mov           [flag], STATE_32
 
 .Consol:
-        mov           eax, [ebx+4]
+        mov           eax, [ebx+4*edx]
+        inc           edx
         mov           [FileBin], eax
-        mov           eax, [ebx+8]
+        mov           eax, [ebx+edx*4]
         mov           [FileTxt], eax
         invoke        CreateFile, [FileTxt], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
         mov           ebx, eax
         invoke        WriteFile, eax , bom, 2,.nBytes, NULL
-        stdcall       Start, ebx
+        stdcall       Start, ebx, flag
 
 .EndProc:
+        invoke        GetProcessHeap
+        invoke        HeapFree, eax, 0, [Mas]
         pop           eax
         invoke        LocalFree, eax
         invoke        ExitProcess, 0
@@ -72,20 +98,14 @@ proc WinMain
 .nBytes                       dd      ?
 endp
 
-proc Start handle
+proc Start handle, flag
         stdcall       ReadFileProc, [FileBin]
         mov           edi, eax
         mov           ecx, eax
         add           ecx, [Mas]
-;        push          ecx
-;        invoke        CreateFile, [FileTxt], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
         test          edi,  edi
         jz            .EndProc
-;        push          eax
-;        invoke        WriteFile, eax , bom, 2,.nBytes, NULL
-;        pop           eax
         mov           ebx, [Mas]
-;        pop           ecx
         mov           eax, [handle]
 
 .loop:
@@ -102,6 +122,34 @@ proc Start handle
 .EndProc:
         ret
 
+
+endp
+
+proc wStringToNum uses ebx, string
+        xor           edx, edx
+        xor           eax, eax
+        mov           ecx, 10
+        mov           ebx,[string]
+        cmp           word[ebx], 0
+        je            .EndProc
+
+@@:
+        movzx         eax, word[ebx]
+        sub           eax, "0"
+        inc           ebx
+        inc           ebx
+        cmp           word[ebx], 0
+        je            @F
+        mul           ecx
+        add           edx, eax
+        jmp           @B
+
+@@:
+        add           edx, eax
+
+.EndProc:
+        xchg          eax, edx
+        ret
 
 endp
 
@@ -616,6 +664,7 @@ T4                           du      "db",6 dup 0,"add",5 dup 0,"or",6 dup 0,"ad
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0
 
+flag                         dw      ?
 Mas                          dd      ?
 Inst                         Instructions
 
@@ -659,6 +708,7 @@ import user,\
             TranslateMessage,'TranslateMessage',\
             GetWindowTextLength , 'GetWindowTextLengthW',\
             GetWindowText, 'GetWindowTextW',\
+            CheckMenuRadioItem, 'CheckMenuRadioItem',\
             PostQuitMessage,'PostQuitMessage'
 
 import gdi,\
@@ -678,4 +728,7 @@ resource menus,\
        menuitem '&File',0,MFR_POPUP
                 menuitem '&Input',IDM_INPUT
                 menuitem 'Output',IDM_OUTPUT,MFR_END
-       menuitem '&Exit',IDM_EXIT,MFR_END
+       menuitem '&Mode',0,MFR_POPUP
+                menuitem '&16-bit',IDM_MODE_16,
+                menuitem '&32-bit', IDM_MODE_32,MFR_END
+       menuitem '&Exit',IDM_EXIT, MFR_END

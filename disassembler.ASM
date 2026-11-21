@@ -282,7 +282,7 @@ proc RegPrint uses ebx, optype, handle, stru
         movzx         eax, word[optype]
         and           eax, MASK_SIZE
         cmp           eax, SIZE_8
-        jne           @F
+        jne           .mode16
         movzx         eax, word[optype]
         and           ax, MASK_OPER
         shl           ax, 3
@@ -290,11 +290,19 @@ proc RegPrint uses ebx, optype, handle, stru
         stdcall       WriteStr,eax,[handle]
         jmp           .EndProc
 
-@@:
+.mode16:
         movzx         eax, word[optype]
         and           ax, MASK_OPER
         shl           ax, 3
+        cmp           [flag], STATE_16
+        jne           .mode32
         add           eax, T3
+        jmp           @F
+
+.mode32:
+        add           eax, T7
+
+@@:
         stdcall       WriteStr,eax,[handle]
         jmp           .EndProc
 
@@ -663,6 +671,7 @@ T4                           du      "db",6 dup 0,"add",5 dup 0,"or",6 dup 0,"ad
                                      "jcxz",4 dup 0
 T5                           du      "bx+si",0,"bx+di",0,"bp+si",0,"bp+di",0,"si",0,0,0,0,"di",0,0,0,0,"bp",0,0,0,0,"bx",0,0,0,0
 T6                           du      "es",0,0,"cs",0,0,"ss",0,0,"ds",0,0
+T7                           du      "eax",0,"ecx",0,"edx",0,"ebx",0,"esp",0,"ebp",0,"esi",0,"edi",0
 
 flag                         dw      ?
 Mas                          dd      ?
@@ -709,6 +718,7 @@ import user,\
             GetWindowTextLength , 'GetWindowTextLengthW',\
             GetWindowText, 'GetWindowTextW',\
             CheckMenuRadioItem, 'CheckMenuRadioItem',\
+            GetMenu, 'GetMenu',\
             PostQuitMessage,'PostQuitMessage'
 
 import gdi,\

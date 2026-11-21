@@ -50,11 +50,29 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
         je            .input
         cmp           eax,IDM_OUTPUT
         je            .output
+        cmp           eax,IDM_MODE_16
+        je            .mode16
+        cmp           eax,IDM_MODE_32
+        je            .mode32
         cmp           eax,IDM_EXIT
         je            .wmDestroy
         jmp           .defwndproc
+
+.mode16:
+        invoke        GetMenu,[hWnd]
+        invoke        CheckMenuRadioItem,eax,IDM_MODE_16,IDM_MODE_32,IDM_MODE_16,MF_BYCOMMAND
+        mov           [flag], STATE_16
+        jmp           .EndProc
+
+.mode32:
+        invoke        GetMenu,[hWnd]
+        invoke        CheckMenuRadioItem,eax,IDM_MODE_16,IDM_MODE_32,IDM_MODE_32,MF_BYCOMMAND
+        mov           [flag], STATE_32
+        jmp           .EndProc
 .input:
         invoke        GetOpenFileName, ofn1
+        cmp           eax, 0
+        je            .EndProc
         mov           [FileBin], szFileBin
         invoke        SendMessage,[edithWnd],WM_SETTEXT,0,0
         stdcall       Start, [edithWnd], flag
@@ -62,6 +80,8 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
 
 .output:
         invoke        GetOpenFileName, ofn2
+        cmp           eax, 0
+        je            .EndProc
         mov           [FileTxt], szFileTxt
         invoke        GetWindowTextLength,[edithWnd]
         mov           ebx, eax

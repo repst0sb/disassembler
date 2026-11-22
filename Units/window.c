@@ -75,7 +75,7 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
         je            .EndProc
         mov           [FileBin], szFileBin
         invoke        SendMessage,[edithWnd],WM_SETTEXT,0,0
-        stdcall       Start, [edithWnd], flag
+        stdcall       Start, [edithWnd]
         jmp           .EndProc
 
 .output:

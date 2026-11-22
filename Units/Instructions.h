@@ -8,6 +8,7 @@ flags           db       ?
 memSh           dd       ?
 hasImm          db       ?
 hasModRM        db       ?
+SIBbyte         db       ?
 PostProcess     db       ?
 const           dd       ?
 ends

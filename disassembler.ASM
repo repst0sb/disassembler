@@ -42,6 +42,10 @@ MASK_BP          =      0000_0110b
 MASK_MOD         =      1100_0000b
 MASK_REG         =      0011_1000b
 MASK_MEM         =      0000_0111b
+MASK_SIB         =      0000_0100b
+MASK_EBP         =      0000_0101b
+MASK_INDEX       =      0011_1000b
+MASK_BASE        =      0000_0111b
 
 section '.code' code readable writeable executable
 
@@ -85,7 +89,7 @@ proc WinMain
         invoke        CreateFile, [FileTxt], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
         mov           ebx, eax
         invoke        WriteFile, eax , bom, 2,.nBytes, NULL
-        stdcall       Start, ebx, flag
+        stdcall       Start, ebx
 
 .EndProc:
         invoke        GetProcessHeap
@@ -98,7 +102,7 @@ proc WinMain
 .nBytes                       dd      ?
 endp
 
-proc Start handle, flag
+proc Start handle
         stdcall       ReadFileProc, [FileBin]
         mov           edi, eax
         mov           ecx, eax
@@ -224,7 +228,13 @@ proc OpPrint uses ebx, optype,handle, stru
 .Mem:
         cmp           eax, MEMORY
         jne           .Const
+        cmp           [flag], STATE_16
+        jne           @F
         stdcall       MemPrint, [optype], [handle], [stru]
+        jmp           .EndProc
+
+@@:
+        stdcall       MemPrint32,[optype], [handle], [stru]
         jmp           .EndProc
 
 .Const:
@@ -249,8 +259,10 @@ proc ConstPrint uses ebx, optype, handle, stru
         jmp           .EndProc
 
 .Size16:
-        cmp           edx, SIZE_16
+        cmp           [flag], STATE_16
         jne           .Size32
+        cmp           edx, SIZE_16
+        jne           .Jmpfar16
 
 .Size16S:
 
@@ -258,7 +270,7 @@ proc ConstPrint uses ebx, optype, handle, stru
         stdcall       WriteStr,twob,[handle]
         jmp           .EndProc
 
-.Size32:
+.Jmpfar16:
         push          eax
         and           eax, $FFFF_0000
         shr           eax, 16
@@ -269,6 +281,11 @@ proc ConstPrint uses ebx, optype, handle, stru
         and           eax, $0000_FFFF
         stdcall       HexPrint, eax, twob, 4
         stdcall       WriteStr,twob,[handle]
+        jmp           .EndProc
+
+.Size32:
+        stdcall       HexPrint, eax, fourb, 8
+        stdcall       WriteStr,fourb,[handle]
 
 .EndProc:
         ret
@@ -314,6 +331,137 @@ proc RegPrint uses ebx, optype, handle, stru
         stdcall       WriteStr,eax,[handle]
 
 .EndProc:
+        ret
+endp
+
+proc MemPrint32 uses ebx edx, optype, handle, stru
+        mov           ebx, [stru]
+        movzx         eax, word[optype]
+        and           eax, MASK_SIZE
+        cmp           eax, SIZE_8
+        jne           @F
+        stdcall       WriteStr,bstr,[handle]
+        jmp           .Mem
+@@:
+        stdcall       WriteStr,dstr,[handle]
+.Mem:
+        stdcall       WriteStr,opbr,[handle]
+        movzx         eax, word[optype]
+        and           ax, MASK_MOD or MASK_OPER
+        cmp           ax, MASK_EBP
+        jne           @F
+        mov           eax, [ebx + Instructions.memSh]
+        jmp           .Continue
+
+@@:
+        and           eax, MASK_OPER
+        cmp           ax, MASK_SIB
+        je            .sib
+        movzx         eax, word[optype]
+        and           ax, MASK_OPER
+        shl           eax, 3
+        add           eax, T7
+        stdcall       WriteStr,eax,[handle]
+        jmp           .memsh
+
+.sib:
+        movzx         eax, byte[ebx + Instructions.SIBbyte]
+        and           ax, MASK_BASE
+        cmp           ax, MASK_EBP
+        je            .sibsi
+        shl           eax, 3
+        add           eax, T7
+        stdcall       WriteStr, eax, [handle]
+        jmp           @F
+
+.sibsi:
+        movzx         eax, word[optype]
+        and           ax, MASK_MOD
+        cmp           ax, 0000_0000b
+        je            @F
+        movzx         eax, byte[ebx + Instructions.SIBbyte]
+        and           ax, MASK_BASE
+        shl           eax, 3
+        add           eax, T7
+        stdcall       WriteStr, eax, [handle]
+
+@@:
+        movzx         eax, byte[ebx + Instructions.SIBbyte]
+        and           ax, MASK_INDEX
+        shr           eax, 3
+        cmp           ax, MASK_SIB
+        je            .sibmem
+        movzx         eax, byte[ebx + Instructions.SIBbyte]
+        and           ax, MASK_BASE
+        cmp           ax, MASK_EBP
+        je            @F
+        stdcall       WriteStr, plus, [handle]
+        jmp           .nobase
+
+@@:
+        movzx         eax, word[optype]
+        and           ax, MASK_MOD
+        cmp           ax, 0000_0000b
+        je            .nobase
+        stdcall       WriteStr, plus, [handle]
+
+.nobase:
+        movzx         eax, byte[ebx + Instructions.SIBbyte]
+        and           ax, MASK_INDEX
+        add           eax, T7
+        stdcall       WriteStr,eax,[handle]
+        movzx         eax, byte[ebx + Instructions.SIBbyte]
+        and           ax, MASK_MOD
+        cmp           ax, 0000_0000b
+        je            .memsh
+        cmp           ax, 0100_0000b
+        jne           .ss4
+        mov           eax, 2
+        stdcall       HexPrint, eax, scale, 1
+        stdcall       WriteStr,scale,[handle]
+        jmp           .memsh
+.ss4:
+        cmp           ax, 1000_0000b
+        jne           .ss8
+        mov           eax, 4
+        stdcall       HexPrint, eax, scale, 1
+        stdcall       WriteStr,scale,[handle]
+        jmp           .memsh
+
+.ss8:
+        mov           eax, 8
+        stdcall       HexPrint, eax, scale, 1
+        stdcall       WriteStr,scale,[handle]
+
+.memsh:
+        cmp           [ebx + Instructions.memSh], 0
+        jz            .EndProc
+        test          [ebx + Instructions.memSh], $80000000
+        jz            @F
+        stdcall       WriteStr, minus, [handle]
+        mov           eax, [ebx + Instructions.memSh]
+        neg           eax
+        jmp           .Continue
+@@:
+        stdcall       WriteStr, plus, [handle]
+        mov           eax, [ebx + Instructions.memSh]
+        jmp           .Continue
+
+.sibmem:
+        movzx         eax, word[optype]
+        and           ax, MASK_MOD
+        cmp           ax, 0000_0000b
+        jne           .memsh
+        cmp           [ebx + Instructions.memSh], 0
+        jz            .EndProc
+        mov           eax, [ebx + Instructions.memSh]
+
+.Continue:
+        stdcall       HexPrint, eax, fourb, 8
+        stdcall       WriteStr,fourb,[handle]
+
+.EndProc:
+        stdcall       WriteStr,clbr,[handle]
         ret
 endp
 
@@ -495,6 +643,8 @@ proc Const uses ebx esi, bt, stru
         jmp           .EndProc
 
 .Size_16:
+        cmp           [flag], STATE_16
+        jne           .Size_32
         cmp           ax, SIZE_16
         jne           .Size_32
         movsx         eax, word[esi]
@@ -526,8 +676,14 @@ proc ModRM uses ebx esi, bt, stru
         and           edx, FIN_BIT
         test          edx, edx
         jnz           .Op2
-
+        cmp           [flag], STATE_16
+        jne           @F
         stdcall       ProcOp, [stru], esi, Instructions.optype1
+        add           [numBt], al
+        jmp           .Op2
+
+@@:
+        stdcall       ProcOp32, [stru], esi, Instructions.optype1
         add           [numBt], al
 
 .Op2:
@@ -541,11 +697,132 @@ proc ModRM uses ebx esi, bt, stru
         and           edx, MASK_OPTYPE
         cmp           edx, CONST
         je            .EndProc
+        cmp           [flag], STATE_16
+        jne           @F
         stdcall       ProcOp, [stru], esi, Instructions.optype2
+        add           [numBt], al
+        jmp           .EndProc
+
+@@:
+        stdcall       ProcOp32, [stru], esi, Instructions.optype2
         add           [numBt], al
 
 .EndProc:
         movzx         eax, byte[numBt]
+        ret
+endp
+
+proc ProcOp32 uses ebx esi edi, stru, bt, optypeN
+        locals
+         numBt        db      0
+        endl
+
+        mov           esi, [bt]
+        movzx         eax, byte[esi]
+        mov           ebx, [stru]
+        mov           edi, [optypeN]
+        movzx         edx, word[ebx + edi]
+        and           edx, MASK_OPTYPE
+        cmp           edx, REGISTER
+        jne            @F
+        and           eax, MASK_REG
+        shr           eax, 3
+        and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
+        or            [ebx + edi], ax
+        jmp           .EndProc
+@@:
+        push          eax
+        and           eax, MASK_MOD
+        cmp           eax, 0000_0000b
+        jnz           @F
+        pop           eax
+        and           eax, MASK_MOD or MASK_MEM
+        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
+        or            [ebx + edi], ax
+        and           eax, MASK_MEM
+        cmp           eax, MASK_SIB
+        je            .sib
+        cmp           eax, MASK_EBP
+        je            .disp32
+        mov           [ebx + Instructions.memSh], 0
+        jmp           .EndProc
+
+.sib:
+        inc           esi
+        movzx         ecx, byte[esi]
+        mov           byte[ebx + Instructions.SIBbyte], cl
+        inc           [numBt]
+        and           ecx, MASK_BASE
+        cmp           ecx, MASK_EBP
+        je            .sibdisp
+        mov           [ebx + Instructions.memSh], 0
+        jmp           .EndProc
+
+.sibdisp:
+        movzx         eax, word[ebx + edi]
+        and           eax, MASK_MOD
+        cmp           eax, 0000_0000b
+        je            .disp32
+        cmp           eax, 0100_0000b
+        je            .disp8
+        cmp           eax, 1000_0000b
+        je            .disp32
+        jmp           .EndProc
+
+@@:
+        cmp           eax, 0100_0000b
+        jne           @F
+        pop           eax
+        and           eax, MASK_MOD or MASK_MEM
+        and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
+        or            [ebx + edi], ax
+        and           eax, MASK_MEM
+        cmp           eax, MASK_SIB
+        jne           .disp8
+        inc           esi
+        movzx         ecx, byte[esi]
+        mov           byte[ebx + Instructions.SIBbyte], cl
+        inc           [numBt]
+
+.disp8:
+        inc           esi
+        movsx         ecx, byte[esi]
+        mov           [ebx + Instructions.memSh], ecx
+        add           [numBt], 1
+        jmp           .EndProc
+
+@@:
+        cmp           eax, 1000_0000b
+        jne           @F
+        pop           eax
+        and           eax, MASK_MOD or MASK_MEM
+        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
+        or            [ebx + edi], ax
+        and           eax, MASK_MEM
+        cmp           eax, MASK_SIB
+        jne           .disp32
+        inc           esi
+        movzx         ecx, byte[esi]
+        mov           byte[ebx + Instructions.SIBbyte], cl
+        inc           [numBt]
+
+.disp32:
+        inc           esi
+        mov           ecx,[esi]
+        mov           [ebx + Instructions.memSh], ecx
+        add           [numBt], 4
+        jmp           .EndProc
+
+@@:
+        pop           eax
+        and           eax, MASK_MEM
+        and           word[ebx + edi], MASK_SIZE
+        or            word[ebx + edi], REGISTER
+        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
+        or            [ebx + edi], ax
+
+.EndProc:
+        movzx         eax,byte[numBt]
         ret
 endp
 
@@ -637,8 +914,10 @@ section '.data' data readable writeable
         include         'Units\window.di'
         include         'Units\window.du'
 
+fourb                        du      "$00000000",0
 twob                         du      "$0000",0
 oneb                         du      "$00", 0
+scale                        du      "*0",0
 bom                          dw      $FEFF
 opbr                         du      "[",0
 clbr                         du      "]",0
@@ -651,6 +930,7 @@ colon                        du      ":",0
 letter                       du      " ", 0
 bstr                         du      "byte",0
 wstr                         du      "word",0
+dstr                         du      "dword",0
 entstr                       dw      13, 10,0
 T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,PUSH_SEG,POP_SEG,OR_08,OR_09,OR_0A,OR_0B,OR_0C,OR_0D,PUSH_SEG,POP_SEG,ADC_10,ADC_11,ADC_12,ADC_13,ADC_14,ADC_15,PUSH_SEG,POP_SEG,SBB_18,SBB_19,SBB_1A,\
                                      SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39,\

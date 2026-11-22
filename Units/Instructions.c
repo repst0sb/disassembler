@@ -1180,7 +1180,7 @@ proc MOV_8E stru, bt
         jnz           .Unknown
         movzx         eax, word[edx + Instructions.optype1]
         and           eax, 0000_0000_0000_0011b
-        mov           [edx + Instructions.optype2], SIZE_16 or MEMORY
+        mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype1], ax
         or            [edx + Instructions.optype1], SIZE_16 or SEGMENT_REG or FIN_BIT
         mov           [edx + Instructions.optype3], 0
@@ -1215,7 +1215,7 @@ proc MOV_8C stru, bt
         jnz           .Unknown
         movzx         eax, word[edx + Instructions.optype1]
         and           eax, 0000_0000_0000_0011b
-        mov           [edx + Instructions.optype1], SIZE_16 or MEMORY
+        mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], ax
         or            [edx + Instructions.optype2], SIZE_16 or SEGMENT_REG or FIN_BIT
         mov           [edx + Instructions.optype3], 0

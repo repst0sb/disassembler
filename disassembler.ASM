@@ -10,15 +10,10 @@
 STATE_16         =      $01
 STATE_32         =      $02
 
-STATE_OPCODE     =      $10
-STATE_MODRM      =      $11
-STATE_CONST      =      $12
-STATE_END        =      $ff
-
-REGISTER         =      0000_0000_0000_0000b
-MEMORY           =      0000_0000_0010_0000b
-CONST            =      0000_0000_0011_0000b
-SEGMENT_REG      =      0000_0000_0000_1000b
+REGISTER         =      0000_0000b
+MEMORY           =      0010_0000b
+CONST            =      0011_0000b
+SEGMENT_REG      =      0000_1000b
 
 SIGN_CONST       =      0000_0100_0000_0000b
 FIN_BIT          =      0000_1000_0000_0000b
@@ -676,14 +671,7 @@ proc ModRM uses ebx esi, bt, stru
         and           edx, FIN_BIT
         test          edx, edx
         jnz           .Op2
-        cmp           [flag], STATE_16
-        jne           @F
         stdcall       ProcOp, [stru], esi, Instructions.optype1
-        add           [numBt], al
-        jmp           .Op2
-
-@@:
-        stdcall       ProcOp32, [stru], esi, Instructions.optype1
         add           [numBt], al
 
 .Op2:
@@ -697,132 +685,11 @@ proc ModRM uses ebx esi, bt, stru
         and           edx, MASK_OPTYPE
         cmp           edx, CONST
         je            .EndProc
-        cmp           [flag], STATE_16
-        jne           @F
         stdcall       ProcOp, [stru], esi, Instructions.optype2
-        add           [numBt], al
-        jmp           .EndProc
-
-@@:
-        stdcall       ProcOp32, [stru], esi, Instructions.optype2
         add           [numBt], al
 
 .EndProc:
         movzx         eax, byte[numBt]
-        ret
-endp
-
-proc ProcOp32 uses ebx esi edi, stru, bt, optypeN
-        locals
-         numBt        db      0
-        endl
-
-        mov           esi, [bt]
-        movzx         eax, byte[esi]
-        mov           ebx, [stru]
-        mov           edi, [optypeN]
-        movzx         edx, word[ebx + edi]
-        and           edx, MASK_OPTYPE
-        cmp           edx, REGISTER
-        jne            @F
-        and           eax, MASK_REG
-        shr           eax, 3
-        and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
-        or            [ebx + edi], ax
-        jmp           .EndProc
-@@:
-        push          eax
-        and           eax, MASK_MOD
-        cmp           eax, 0000_0000b
-        jnz           @F
-        pop           eax
-        and           eax, MASK_MOD or MASK_MEM
-        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
-        or            [ebx + edi], ax
-        and           eax, MASK_MEM
-        cmp           eax, MASK_SIB
-        je            .sib
-        cmp           eax, MASK_EBP
-        je            .disp32
-        mov           [ebx + Instructions.memSh], 0
-        jmp           .EndProc
-
-.sib:
-        inc           esi
-        movzx         ecx, byte[esi]
-        mov           byte[ebx + Instructions.SIBbyte], cl
-        inc           [numBt]
-        and           ecx, MASK_BASE
-        cmp           ecx, MASK_EBP
-        je            .sibdisp
-        mov           [ebx + Instructions.memSh], 0
-        jmp           .EndProc
-
-.sibdisp:
-        movzx         eax, word[ebx + edi]
-        and           eax, MASK_MOD
-        cmp           eax, 0000_0000b
-        je            .disp32
-        cmp           eax, 0100_0000b
-        je            .disp8
-        cmp           eax, 1000_0000b
-        je            .disp32
-        jmp           .EndProc
-
-@@:
-        cmp           eax, 0100_0000b
-        jne           @F
-        pop           eax
-        and           eax, MASK_MOD or MASK_MEM
-        and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
-        or            [ebx + edi], ax
-        and           eax, MASK_MEM
-        cmp           eax, MASK_SIB
-        jne           .disp8
-        inc           esi
-        movzx         ecx, byte[esi]
-        mov           byte[ebx + Instructions.SIBbyte], cl
-        inc           [numBt]
-
-.disp8:
-        inc           esi
-        movsx         ecx, byte[esi]
-        mov           [ebx + Instructions.memSh], ecx
-        add           [numBt], 1
-        jmp           .EndProc
-
-@@:
-        cmp           eax, 1000_0000b
-        jne           @F
-        pop           eax
-        and           eax, MASK_MOD or MASK_MEM
-        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
-        or            [ebx + edi], ax
-        and           eax, MASK_MEM
-        cmp           eax, MASK_SIB
-        jne           .disp32
-        inc           esi
-        movzx         ecx, byte[esi]
-        mov           byte[ebx + Instructions.SIBbyte], cl
-        inc           [numBt]
-
-.disp32:
-        inc           esi
-        mov           ecx,[esi]
-        mov           [ebx + Instructions.memSh], ecx
-        add           [numBt], 4
-        jmp           .EndProc
-
-@@:
-        pop           eax
-        and           eax, MASK_MEM
-        and           word[ebx + edi], MASK_SIZE
-        or            word[ebx + edi], REGISTER
-        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
-        or            [ebx + edi], ax
-
-.EndProc:
-        movzx         eax,byte[numBt]
         ret
 endp
 
@@ -839,72 +706,133 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         movzx         edx, word[ebx + edi]
         and           edx, MASK_OPTYPE
         cmp           edx, REGISTER
-        jne            @F
+        jne           .memory
         and           eax, MASK_REG
         shr           eax, 3
         and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], ax
         jmp           .EndProc
-@@:
+
+.memory:
         push          eax
         and           eax, MASK_MOD
         cmp           eax, 0000_0000b
-        jnz           @F
+        jne           .mod01
         pop           eax
         and           eax, MASK_MOD or MASK_MEM
         and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], ax
         and           eax, MASK_MEM
+        cmp           [flag], STATE_16
+        jne           .mod00_32
         cmp           eax, MASK_BP
-        je            .disp
+        jne           .nomemsh
+        jmp           .disp16
+
+.mod00_32:
+        cmp           eax, MASK_SIB
+        je            .sib
+        cmp           eax, MASK_EBP
+        jne           .nomemsh
+        jmp           .disp32
+
+.nomemsh:
         mov           [ebx + Instructions.memSh], 0
         jmp           .EndProc
 
-.disp:
+.sib:
+        movzx         eax, word[ebx + edi]
+        and           eax, MASK_MOD
+        shl           eax, 2
         inc           esi
-        movsx         ecx, word[esi]
-        mov           [ebx + Instructions.memSh], ecx
-        mov           [numBt], 2
-        jmp           .EndProc
+        movzx         ecx, byte[esi]
+        or            ecx, eax
+        mov           word[ebx + Instructions.SIBbyte], cx
+        inc           [numBt]
+
+        shr           eax, 2
+        cmp           eax, 0000_0000b
+        jne           @F
+        and           ecx, MASK_BASE
+        cmp           ecx, MASK_EBP
+        je            .disp32
+        jmp           .nomemsh
 
 @@:
         cmp           eax, 0100_0000b
-        jne           @F
+        je            .disp8
+        cmp           eax, 1000_0000b
+        je            .disp32
+        jmp           .EndProc
+
+.mod01:
+        cmp           eax, 0100_0000b
+        jne           .mod10
         pop           eax
         and           eax, MASK_MOD or MASK_MEM
         and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], ax
-        inc           esi
-        movsx         ecx, byte[esi]
-        mov           [ebx + Instructions.memSh], ecx
-        mov           [numBt], 1
-        jmp           .EndProc
+        cmp           [flag], STATE_16
+        jne           .mod01_32
+        jmp           .disp8
 
-@@:
+.mod01_32:
+        and           eax, MASK_MEM
+        cmp           eax, MASK_SIB
+        jne           .disp8
+        jmp           .sib
+
+.mod10:
         cmp           eax, 1000_0000b
-        jne           @F
+        jne           .mod11
         pop           eax
         and           eax, MASK_MOD or MASK_MEM
-        and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
+        and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], ax
-        inc           esi
-        movsx         ecx, word[esi]
-        mov           [ebx + Instructions.memSh], ecx
-        mov           [numBt], 2
-        jmp           .EndProc
+        cmp           [flag], STATE_16
+        jne           .mod10_32
+        jmp           .disp16
 
-@@:
+.mod10_32:
+        and           eax, MASK_MEM
+        cmp           eax, MASK_SIB
+        jne           .disp32
+        jmp           .sib
+
+.mod11:
         pop           eax
         and           eax, MASK_MEM
         and           word[ebx + edi], MASK_SIZE
         or            word[ebx + edi], REGISTER
         and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], ax
+        jmp           .EndProc
+
+.disp8:
+        inc           esi
+        movsx         ecx, byte[esi]
+        mov           [ebx + Instructions.memSh], ecx
+        inc           [numBt]
+        jmp           .EndProc
+
+.disp16:
+        inc           esi
+        movsx         ecx, word[esi]
+        mov           [ebx + Instructions.memSh], ecx
+        add           [numBt], 2
+        jmp           .EndProc
+
+.disp32:
+        inc           esi
+        mov           ecx,[esi]
+        mov           [ebx + Instructions.memSh], ecx
+        add           [numBt], 4
 
 .EndProc:
         movzx         eax,byte[numBt]
         ret
 endp
+
 
         include       'Units\Instructions.c'
         include         'Units\window.c'

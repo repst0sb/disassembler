@@ -50,36 +50,31 @@ proc WinMain
         mov           ebx, eax
         push          eax
         mov           [flag], STATE_16
-        mov           edx, 1
+        mov           esi, 1
+
         cmp           [.argvNum], 4
         ja            .EndProc
-        je            @F
+        je            .withMode
         cmp           [.argvNum], 3
-        je            .Consol
+        je            .conDef
         stdcall       Window
         jmp           .EndProc
 
-@@:
-        mov           ecx, [ebx+4*edx]
-        push          edx
+.withMode:
+        mov           ecx, [ebx+4*esi]
         stdcall       wStringToNum, ecx
-        pop           edx
-        inc           edx
+        inc           esi
         cmp           eax, 16
-        jne           .32bit
-        mov           [flag],  STATE_16
-        jmp           .Consol
-
-.32bit:
+        je            .conDef
         cmp           eax, 32
         jne           .EndProc
         mov           [flag], STATE_32
 
-.Consol:
-        mov           eax, [ebx+4*edx]
-        inc           edx
+.conDef:
+        mov           eax, [ebx+4*esi]
+        inc           esi
         mov           [FileBin], eax
-        mov           eax, [ebx+edx*4]
+        mov           eax, [ebx+esi*4]
         mov           [FileTxt], eax
         invoke        CreateFile, [FileTxt], GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL
         mov           ebx, eax
@@ -100,44 +95,37 @@ endp
 proc Start handle
         stdcall       ReadFileProc, [FileBin]
         mov           edi, eax
-        mov           ecx, eax
-        add           ecx, [Mas]
         test          edi,  edi
         jz            .EndProc
+        mov           ecx, eax
         mov           ebx, [Mas]
-        mov           eax, [handle]
+        add           ecx, ebx
 
 .loop:
-        push          ecx eax
+        push          ecx
         stdcall       Avto, ebx, Inst, ecx
         mov           ebx, eax
-        pop           eax ecx
-        push          ecx eax
-        stdcall       WriteFileProc, Inst, eax
-        pop           eax ecx
+        stdcall       WriteFileProc, Inst, [handle]
+        pop           ecx
         cmp           ebx, ecx
         jb            .loop
 
 .EndProc:
         ret
-
-
 endp
 
-proc wStringToNum uses ebx, string
+proc wStringToNum uses ebx esi, string
         xor           edx, edx
         xor           eax, eax
         mov           ecx, 10
-        mov           ebx,[string]
-        cmp           word[ebx], 0
+        mov           esi,[string]
+        cmp           word[esi], 0
         je            .EndProc
 
 @@:
-        movzx         eax, word[ebx]
-        sub           eax, "0"
-        inc           ebx
-        inc           ebx
-        cmp           word[ebx], 0
+        lodsw
+        sub           ax, "0"
+        cmp           [si], 0
         je            @F
         mul           ecx
         add           edx, eax
@@ -154,7 +142,6 @@ endp
 
 proc ReadFileProc uses ebx, NameBIN
         invoke        CreateFile,[NameBIN], GENERIC_READ , FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
-
         push          eax
         push          eax
         invoke        GetFileSize, eax, NULL
@@ -557,10 +544,6 @@ endp
 
 proc Avto uses esi ebx edi, start, stru, endMas
 
-        locals
-         state          dd      ?
-        endl
-
         mov           esi, [start]
         movzx         ebx, byte[esi]
         mov           edi, [stru]
@@ -613,7 +596,7 @@ endp
 proc Const uses ebx esi, bt, stru
 
         locals
-         numBt        db      ?
+         numBt        db      0
         endl
 
         mov           esi, [bt]
@@ -621,38 +604,36 @@ proc Const uses ebx esi, bt, stru
         movzx         eax, word[ebx + Instructions.optype1]
         and           eax, MASK_OPTYPE
         cmp           eax, CONST
-        jne           @F
+        jne           .optp2
         movzx         eax, word[ebx + Instructions.optype1]
         jmp           .Next
 
-@@:
+.optp2:
         movzx         eax, word[ebx + Instructions.optype2]
 
 .Next:
         and           ax, MASK_SIZE
         cmp           ax, SIZE_8
-        jne           .Size_16
+        jne           .sizeDef
         movsx         eax, byte[esi]
-        add           [ebx + Instructions.const], eax
-        mov           [numBt], 1
+        inc           [numBt]
         jmp           .EndProc
 
-.Size_16:
+.sizeDef:
         cmp           [flag], STATE_16
-        jne           .Size_32
+        jne           .size32
         cmp           ax, SIZE_16
-        jne           .Size_32
+        jne           .size32
         movsx         eax, word[esi]
-        add           [ebx + Instructions.const], eax
-        mov           [numBt], 2
+        add           [numBt], 2
         jmp           .EndProc
 
-.Size_32:
+.size32:
         mov           eax, dword[esi]
-        add           [ebx + Instructions.const], eax
-        mov           [numBt], 4
+        add           [numBt], 4
 
 .EndProc:
+        add           [ebx + Instructions.const], eax
         movzx         eax, byte[numBt]
         ret
 endp

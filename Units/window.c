@@ -61,13 +61,13 @@ proc WindowProc uses ebx esi edi, hWnd,wMsg,wParam,lParam
 .mode16:
         invoke        GetMenu,[hWnd]
         invoke        CheckMenuRadioItem,eax,IDM_MODE_16,IDM_MODE_32,IDM_MODE_16,MF_BYCOMMAND
-        mov           [flag], STATE_16
+        mov           [flag], MODE_16
         jmp           .EndProc
 
 .mode32:
         invoke        GetMenu,[hWnd]
         invoke        CheckMenuRadioItem,eax,IDM_MODE_16,IDM_MODE_32,IDM_MODE_32,MF_BYCOMMAND
-        mov           [flag], STATE_32
+        mov           [flag], MODE_32
         jmp           .EndProc
 .input:
         invoke        GetOpenFileName, ofn1

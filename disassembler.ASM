@@ -7,8 +7,8 @@
         include         'Units\Instructions.h'
         include         'Units\window.h'
 
-STATE_16         =      $01
-STATE_32         =      $02
+MODE_16          =      0000_0001b
+MODE_32          =      0000_0010b
 
 REGISTER         =      0000_0000b
 MEMORY           =      0010_0000b
@@ -25,22 +25,26 @@ SIZE_32          =      0000_0011_0000_0000b
 
 REG_AL           =      0000_0001_0000_0000b
 REG_AX           =      0000_0010_0000_0000b
-
 REG_CL           =      0000_0001_0000_0001b
 
-MASK_SIZE        =      0000_0011_0000_0000b
-MASK_OPTYPE      =      0000_0000_0011_0000b
-MASK_OPER        =      0000_0000_0000_0111b
-MASK_SEGREG      =      0000_0000_0000_1000b
-MASK_SIGN        =      0000_0100_0000_0000b
-MASK_BP          =      0000_0110b
+MASK_OPER        =      0000_0111b
+MASK_SEGREG      =      0000_1000b
+MASK_OPTYPE      =      0011_0000b
 MASK_MOD         =      1100_0000b
+MASK_SIZE        =      0000_0011_0000_0000b
+MASK_SIGN        =      0000_0100_0000_0000b
+
 MASK_REG         =      0011_1000b
 MASK_MEM         =      0000_0111b
-MASK_SIB         =      0000_0100b
+
+MASK_BP          =      0000_0110b
 MASK_EBP         =      0000_0101b
+MASK_SIB         =      0000_0100b
+
 MASK_INDEX       =      0011_1000b
 MASK_BASE        =      0000_0111b
+MASK_SS          =      1100_0000b
+
 
 section '.code' code readable writeable executable
 
@@ -49,7 +53,7 @@ proc WinMain
         invoke        CommandLineToArgvW, eax, .argvNum
         mov           ebx, eax
         push          eax
-        mov           [flag], STATE_16
+        mov           [flag], MODE_16
         mov           esi, 1
 
         cmp           [.argvNum], 4
@@ -68,7 +72,7 @@ proc WinMain
         je            .conDef
         cmp           eax, 32
         jne           .EndProc
-        mov           [flag], STATE_32
+        mov           [flag], MODE_32
 
 .conDef:
         mov           eax, [ebx+4*esi]
@@ -125,7 +129,7 @@ proc wStringToNum uses ebx esi, string
 @@:
         lodsw
         sub           ax, "0"
-        cmp           [si], 0
+        cmp           word[esi], 0
         je            @F
         mul           ecx
         add           edx, eax
@@ -210,13 +214,7 @@ proc OpPrint uses ebx, optype,handle, stru
 .Mem:
         cmp           eax, MEMORY
         jne           .Const
-        cmp           [flag], STATE_16
-        jne           @F
         stdcall       MemPrint, [optype], [handle], [stru]
-        jmp           .EndProc
-
-@@:
-        stdcall       MemPrint32,[optype], [handle], [stru]
         jmp           .EndProc
 
 .Const:
@@ -241,7 +239,7 @@ proc ConstPrint uses ebx, optype, handle, stru
         jmp           .EndProc
 
 .Size16:
-        cmp           [flag], STATE_16
+        cmp           [flag], MODE_16
         jne           .Size32
         cmp           edx, SIZE_16
         jne           .Jmpfar16
@@ -275,116 +273,113 @@ endp
 
 proc RegPrint uses ebx, optype, handle, stru
         movzx         eax, word[optype]
-        and           eax, MASK_SEGREG
-        cmp           eax, SEGMENT_REG
-        je            .SegReg
-        movzx         eax, word[optype]
-        and           eax, MASK_SIZE
-        cmp           eax, SIZE_8
-        jne           .mode16
-        movzx         eax, word[optype]
+        mov           ebx, eax
         and           ax, MASK_OPER
         shl           ax, 3
+
+        and           ebx, MASK_SEGREG
+        cmp           ebx, SEGMENT_REG
+        je            .SegReg
+
+        movzx         ebx, word[optype]
+        and           ebx, MASK_SIZE
+        cmp           ebx, SIZE_8
+        jne           .mode
         add           eax, T2
-        stdcall       WriteStr,eax,[handle]
         jmp           .EndProc
 
-.mode16:
-        movzx         eax, word[optype]
-        and           ax, MASK_OPER
-        shl           ax, 3
-        cmp           [flag], STATE_16
+.mode:
+        cmp           [flag], MODE_16
         jne           .mode32
         add           eax, T3
-        jmp           @F
+        jmp           .EndProc
 
 .mode32:
         add           eax, T7
-
-@@:
-        stdcall       WriteStr,eax,[handle]
         jmp           .EndProc
 
 .SegReg:
-        movzx         eax, word[optype]
-        and           ax, MASK_OPER
-        shl           ax, 3
         add           eax, T6
-        stdcall       WriteStr,eax,[handle]
 
 .EndProc:
+        stdcall       WriteStr,eax,[handle]
         ret
 endp
 
-proc MemPrint32 uses ebx edx, optype, handle, stru
+proc MemPrint uses ebx esi, optype, handle, stru
         mov           ebx, [stru]
         movzx         eax, word[optype]
         and           eax, MASK_SIZE
         cmp           eax, SIZE_8
-        jne           @F
-        stdcall       WriteStr,bstr,[handle]
+        je            .size8
+        cmp           [flag], MODE_16
+        jne           .size32
+        stdcall       WriteStr,wstr,[handle]
         jmp           .Mem
-@@:
+
+.size32:
         stdcall       WriteStr,dstr,[handle]
+        jmp           .Mem
+
+.size8:
+        stdcall       WriteStr,bstr,[handle]
 .Mem:
         stdcall       WriteStr,opbr,[handle]
+        mov           edx, 12
         movzx         eax, word[optype]
         and           ax, MASK_MOD or MASK_OPER
+        cmp           [flag], MODE_16
+        jne           .cmpEBP
+        cmp           ax, MASK_BP
+        jne           .wrtReg
+        jmp           @F
+
+.cmpEBP:
         cmp           ax, MASK_EBP
-        jne           @F
+        jne           .cmpSIB
+
+@@:
         mov           eax, [ebx + Instructions.memSh]
         jmp           .Continue
 
-@@:
+.cmpSIB:
         and           eax, MASK_OPER
         cmp           ax, MASK_SIB
-        je            .sib
-        movzx         eax, word[optype]
-        and           ax, MASK_OPER
-        shl           eax, 3
-        add           eax, T7
-        stdcall       WriteStr,eax,[handle]
-        jmp           .memsh
+        jne           .wrtReg
 
 .sib:
         movzx         eax, byte[ebx + Instructions.SIBbyte]
         and           ax, MASK_BASE
+        movzx         esi, word[optype]
+        and           esi, MASK_MOD
+        cmp           esi, 0000_0000b
+        jne           .base
         cmp           ax, MASK_EBP
-        je            .sibsi
-        shl           eax, 3
-        add           eax, T7
-        stdcall       WriteStr, eax, [handle]
-        jmp           @F
+        je            .index
 
-.sibsi:
-        movzx         eax, word[optype]
-        and           ax, MASK_MOD
-        cmp           ax, 0000_0000b
-        je            @F
-        movzx         eax, byte[ebx + Instructions.SIBbyte]
-        and           ax, MASK_BASE
+.base:
         shl           eax, 3
         add           eax, T7
         stdcall       WriteStr, eax, [handle]
 
-@@:
+.index:
         movzx         eax, byte[ebx + Instructions.SIBbyte]
         and           ax, MASK_INDEX
         shr           eax, 3
         cmp           ax, MASK_SIB
         je            .sibmem
-        movzx         eax, byte[ebx + Instructions.SIBbyte]
-        and           ax, MASK_BASE
-        cmp           ax, MASK_EBP
-        je            @F
-        stdcall       WriteStr, plus, [handle]
-        jmp           .nobase
 
-@@:
         movzx         eax, word[optype]
         and           ax, MASK_MOD
         cmp           ax, 0000_0000b
+        jne           .hasbase
+
+        movzx         eax, byte[ebx + Instructions.SIBbyte]
+        and           ax, MASK_BASE
+        cmp           ax, MASK_EBP
         je            .nobase
+
+.hasbase:
         stdcall       WriteStr, plus, [handle]
 
 .nobase:
@@ -392,42 +387,61 @@ proc MemPrint32 uses ebx edx, optype, handle, stru
         and           ax, MASK_INDEX
         add           eax, T7
         stdcall       WriteStr,eax,[handle]
+
         movzx         eax, byte[ebx + Instructions.SIBbyte]
-        and           ax, MASK_MOD
+        and           ax, MASK_SS
         cmp           ax, 0000_0000b
         je            .memsh
         cmp           ax, 0100_0000b
-        jne           .ss4
-        mov           eax, 2
-        stdcall       HexPrint, eax, scale, 1
-        stdcall       WriteStr,scale,[handle]
-        jmp           .memsh
-.ss4:
+        je            .ss2
         cmp           ax, 1000_0000b
-        jne           .ss8
+        je            .ss4
+        mov           eax, 8
+        jmp           .wrtSS
+
+.ss2:
+        mov           eax, 2
+        jmp           .wrtSS
+
+.ss4:
         mov           eax, 4
+
+.wrtSS:
         stdcall       HexPrint, eax, scale, 1
         stdcall       WriteStr,scale,[handle]
         jmp           .memsh
 
-.ss8:
-        mov           eax, 8
-        stdcall       HexPrint, eax, scale, 1
-        stdcall       WriteStr,scale,[handle]
+
+.wrtReg:
+        movzx         eax, word[optype]
+        and           ax, MASK_OPER
+        cmp           [flag], MODE_16
+        je            .reg16
+        shl           eax, 3
+        add           eax, T7
+        stdcall       WriteStr,eax,[handle]
+        jmp           .memsh
+
+.reg16:
+        mul           edx
+        add           eax, T5
+        stdcall       WriteStr,eax,[handle]
 
 .memsh:
         cmp           [ebx + Instructions.memSh], 0
         jz            .EndProc
         test          [ebx + Instructions.memSh], $80000000
-        jz            @F
+        jz            .umem
         stdcall       WriteStr, minus, [handle]
         mov           eax, [ebx + Instructions.memSh]
         neg           eax
         jmp           .Continue
-@@:
+
+.umem:
         stdcall       WriteStr, plus, [handle]
         mov           eax, [ebx + Instructions.memSh]
         jmp           .Continue
+
 
 .sibmem:
         movzx         eax, word[optype]
@@ -439,56 +453,15 @@ proc MemPrint32 uses ebx edx, optype, handle, stru
         mov           eax, [ebx + Instructions.memSh]
 
 .Continue:
-        stdcall       HexPrint, eax, fourb, 8
-        stdcall       WriteStr,fourb,[handle]
-
-.EndProc:
-        stdcall       WriteStr,clbr,[handle]
-        ret
-endp
-
-proc MemPrint uses ebx edx, optype, handle, stru
-        mov           ebx, [stru]
-        movzx         eax, word[optype]
-        and           eax, MASK_SIZE
-        cmp           eax, SIZE_8
+        cmp           [flag], MODE_16
         jne           @F
-        stdcall       WriteStr,bstr,[handle]
-        jmp           .Mem
-@@:
-        stdcall       WriteStr,wstr,[handle]
-.Mem:
-        stdcall       WriteStr,opbr,[handle]
-        mov           edx, 12
-        movzx         eax, word[optype]
-        and           ax, MASK_MOD or MASK_OPER
-        cmp           ax, MASK_BP
-        jne           @F
-        mov           eax, [ebx + Instructions.memSh]
-        jmp           .Continue
-
-@@:
-        movzx         eax, word[optype]
-        and           ax, MASK_OPER
-        mul           edx
-        add           eax, T5
-        stdcall       WriteStr,eax,[handle]
-        cmp           [ebx + Instructions.memSh], 0
-        jz            .EndProc
-        test          [ebx + Instructions.memSh], $80000000
-        jz            @F
-        stdcall       WriteStr, minus, [handle]
-        mov           eax, [ebx + Instructions.memSh]
-        neg           eax
-        jmp           .Continue
-@@:
-        stdcall       WriteStr, plus, [handle]
-        mov           eax, [ebx + Instructions.memSh]
-        jmp           .Continue
-
-.Continue:
         stdcall       HexPrint, eax, twob, 4
         stdcall       WriteStr,twob,[handle]
+        jmp           .EndProc
+
+@@:
+        stdcall       HexPrint, eax, fourb, 8
+        stdcall       WriteStr,fourb,[handle]
 
 .EndProc:
         stdcall       WriteStr,clbr,[handle]
@@ -531,7 +504,6 @@ proc WriteStr uses ebx, str, handle
         pop           ecx
         inc           ecx
         jmp           .loop
-        jmp           .EndProc
 
 .WriteToWindow:
         invoke        SendMessage, [handle], EM_SETSEL, -1, -1
@@ -620,7 +592,7 @@ proc Const uses ebx esi, bt, stru
         jmp           .EndProc
 
 .sizeDef:
-        cmp           [flag], STATE_16
+        cmp           [flag], MODE_16
         jne           .size32
         cmp           ax, SIZE_16
         jne           .size32
@@ -704,7 +676,7 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         and           word[ebx + edi], MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], ax
         and           eax, MASK_MEM
-        cmp           [flag], STATE_16
+        cmp           [flag], MODE_16
         jne           .mod00_32
         cmp           eax, MASK_BP
         jne           .nomemsh
@@ -724,14 +696,11 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
 .sib:
         movzx         eax, word[ebx + edi]
         and           eax, MASK_MOD
-        shl           eax, 2
         inc           esi
         movzx         ecx, byte[esi]
-        or            ecx, eax
-        mov           word[ebx + Instructions.SIBbyte], cx
+        mov           byte[ebx + Instructions.SIBbyte], cl
         inc           [numBt]
 
-        shr           eax, 2
         cmp           eax, 0000_0000b
         jne           @F
         and           ecx, MASK_BASE
@@ -753,7 +722,7 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         and           eax, MASK_MOD or MASK_MEM
         and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], ax
-        cmp           [flag], STATE_16
+        cmp           [flag], MODE_16
         jne           .mod01_32
         jmp           .disp8
 
@@ -770,7 +739,7 @@ proc ProcOp uses ebx esi edi, stru, bt, optypeN
         and           eax, MASK_MOD or MASK_MEM
         and           word[ebx + edi],MASK_SIZE or MASK_OPTYPE
         or            [ebx + edi], ax
-        cmp           [flag], STATE_16
+        cmp           [flag], MODE_16
         jne           .mod10_32
         jmp           .disp16
 

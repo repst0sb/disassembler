@@ -1,15 +1,13 @@
 struct Instructions
-pref            dw       ?
+hasImm          db       ?
+hasModRM        db       ?
+PostProcess     db       ?
 opcode          dw       ?
 optype1         dw       ?
 optype2         dw       ?
 optype3         dw       ?
-flags           db       ?
 memSh           dd       ?
-hasImm          db       ?
-hasModRM        db       ?
-SIBbyte         dw       ?
-PostProcess     db       ?
+SIBbyte         db       ?
 const           dd       ?
 ends
 

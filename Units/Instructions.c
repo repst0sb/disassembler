@@ -9,6 +9,20 @@ proc UNKNOWN stru, bt
         ret
 endp
 
+proc PREF_66 stru, bt
+        mov           edx, [stru]
+        mov           eax, 1
+        mov           [edx + Instructions.pref_66], al
+        ret
+endp
+
+proc PREF_67 stru, bt
+        mov           edx, [stru]
+        mov           eax, 1
+        mov           [edx + Instructions.pref_67], al
+        ret
+endp
+
 proc GRP_80 stru, bt
         mov           edx, [stru]
         test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
@@ -17,18 +31,18 @@ proc GRP_80 stru, bt
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           byte[edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        add           [edx + Instructions.opcode], ax
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           byte[edx + Instructions.flags], FLAG_IMM or FLAG_MODRM
+        mov           [edx + Instructions.flags], FLAG_IMM or FLAG_MODRM
 
 .EndProc:
         ret
@@ -46,9 +60,9 @@ proc GRP_81 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        add           [edx + Instructions.opcode], ax
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
@@ -71,15 +85,15 @@ proc GRP_83 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        cmp           ax, 0000_0001b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        cmp           cx, 0000_0001b
         je            .Unknown
-        cmp           ax, 0000_0100b
+        cmp           cx, 0000_0100b
         je            .Unknown
-        cmp           ax, 0000_0110b
+        cmp           cx, 0000_0110b
         je            .Unknown
-        add           [edx + Instructions.opcode], ax
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or CONST or SIGN_CONST
         mov           [edx + Instructions.optype3], 0
@@ -106,11 +120,11 @@ proc GRP_D0 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        cmp           ax, 0000_0000_0000_0110b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        cmp           cx, 0000_0000_0000_0110b
         je            .Unknown
-        add           [edx + Instructions.opcode], ax
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
@@ -137,11 +151,11 @@ proc GRP_D1 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        cmp           ax, 0000_0000_0000_0110b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        cmp           cx, 0000_0000_0000_0110b
         je            .Unknown
-        add           [edx + Instructions.opcode], ax
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
@@ -168,11 +182,11 @@ proc GRP_D2 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        cmp           ax, 0000_0000_0000_0110b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        cmp           cx, 0000_0000_0000_0110b
         je            .Unknown
-        add           [edx + Instructions.opcode], ax
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], REG_CL or FIN_BIT
         mov           [edx + Instructions.optype3], 0
@@ -199,11 +213,11 @@ proc GRP_D3 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        cmp           ax, 0000_0000_0000_0110b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        cmp           cx, 0000_0000_0000_0110b
         je            .Unknown
-        add           [edx + Instructions.opcode], ax
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], REG_CL or FIN_BIT
         mov           [edx + Instructions.optype3], 0
@@ -230,16 +244,16 @@ proc GRP_F6 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        cmp           ax, 0000_0000_0000_0001b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        cmp           cx, 0000_0000_0000_0001b
         je            .Unknown
-        add           [edx + Instructions.opcode], ax
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
         mov           [edx + Instructions.flags],FLAG_MODRM
-        cmp           ax, 0
+        cmp           cx, 0
         jnz           .Opt1
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         or            [edx + Instructions.flags],FLAG_IMM
@@ -268,16 +282,16 @@ proc GRP_F7 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        cmp           ax, 0000_0000_0000_0001b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        cmp           cx, 0000_0000_0000_0001b
         je            .Unknown
-        add           [edx + Instructions.opcode], ax
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
         mov           [edx + Instructions.flags],FLAG_MODRM
-        cmp           ax, 0
+        cmp           cx, 0
         jnz           .Opt1
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         or            [edx + Instructions.flags],FLAG_IMM
@@ -306,17 +320,16 @@ proc GRP_FE stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, 0000_0000_0000_0110b
-        test          ax, ax
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, 0000_0000_0000_0110b
+        test          cx, cx
         jnz           .Unknown
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        add           [edx + Instructions.opcode], ax
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-       ; mov           [edx + Instructions.const],0
         mov           [edx + Instructions.flags], FLAG_MODRM
         jmp           .EndProc
 
@@ -339,29 +352,28 @@ proc GRP_FF stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           ax, MASK_MOD
-        cmp           ax, 1100_0000b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           cx, MASK_MOD
+        cmp           cx, 1100_0000b
         jz            .Unknown
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, MASK_OPER
-        cmp           eax, 0000_0000_0000_0111b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, MASK_OPER
+        cmp           ecx, 0000_0000_0000_0111b
         jz            .Unknown
-        cmp           ax, 0000_0011b
+        cmp           cx, 0000_0011b
         jne           .Jmp
-        mov           ax, 0000_0010b
+        mov           cx, 0000_0010b
         jmp           .Op
 
 .Jmp:
-        cmp           ax, 0000_0101b
+        cmp           cx, 0000_0101b
         jne           .Op
-        mov           ax, 0000_0100b
+        mov           cx, 0000_0100b
 .Op:
-        add           [edx + Instructions.opcode], ax
+        add           [edx + Instructions.opcode], cx
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        ;mov           [edx + Instructions.const],0
         mov           [edx + Instructions.flags], FLAG_MODRM
         jmp           .EndProc
 
@@ -379,7 +391,6 @@ proc ADD_00 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.flags], FLAG_MODRM
-        ;mov           [edx + Instructions.hasModRM],1
         ret
 endp
 
@@ -870,13 +881,13 @@ proc CMP_3D stru, bt
 endp
 
 proc PUSH_SEG stru, bt
-        mov           eax, [bt]
-        and           eax, 0011_1000b
-        shr           eax, 3
+        mov           ecx, [bt]
+        and           ecx, 0011_1000b
+        shr           ecx, 3
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], PUSH_OPCODE
         mov           [edx + Instructions.optype1], SIZE_16 or SEGMENT_REG
-        or            byte[edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], cl
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -884,49 +895,49 @@ endp
 
 
 proc PUSH_REG stru, bt
-        mov           eax, [bt]
-        and           eax, 0000_0111b
+        mov           ecx, [bt]
+        and           ecx, 0000_0111b
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], PUSH_OPCODE
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
-        or            byte[edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], cl
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
 endp
 
 proc POP_SEG stru, bt
-        mov           eax, [bt]
-        and           eax, 0011_1000b
-        shr           eax, 3
+        mov           ecx, [bt]
+        and           ecx, 0011_1000b
+        shr           ecx, 3
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], POP_OPCODE
         mov           [edx + Instructions.optype1], SIZE_16 or SEGMENT_REG
-        or            byte[edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], cl
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
 endp
 
 proc POP_REG stru, bt
-        mov           eax, [bt]
-        and           eax, 0000_0111b
+        mov           ecx, [bt]
+        and           ecx, 0000_0111b
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], POP_OPCODE
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
-        or            byte[edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], cl
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
 endp
 
 proc INC_REG stru, bt
-        mov           eax, [bt]
-        and           eax, 0000_0111b
+        mov           ecx, [bt]
+        and           ecx, 0000_0111b
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], INC_OPCODE
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
-        or            byte[edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], cl
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -934,12 +945,12 @@ proc INC_REG stru, bt
 endp
 
 proc DEC_REG stru, bt
-        mov           eax, [bt]
-        and           eax, 0000_0111b
+        mov           ecx, [bt]
+        and           ecx, 0000_0111b
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], DEC_OPCODE
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
-        or            byte[edx + Instructions.optype1], al
+        or            byte[edx + Instructions.optype1], cl
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         ret
@@ -966,15 +977,15 @@ proc XCHG_87 stru, bt
 endp
 
 proc XCHG_AX stru, bt
-        mov           eax, [bt]
+        mov           ecx, [bt]
         mov           edx, [stru]
-        and           eax, 0000_0111b
-        test          eax, eax
+        and           ecx, 0000_0111b
+        test          ecx, ecx
         jz            .Nop
         mov           [edx + Instructions.opcode], XCHG_OPCODE
         mov           [edx + Instructions.optype1], REG_AX or FIN_BIT
         mov           [edx + Instructions.optype2], REGISTER or SIZE_DEF
-        or            byte[edx + Instructions.optype2], al
+        or            byte[edx + Instructions.optype2], cl
         jmp           .EndProc
 
 .Nop:
@@ -1039,9 +1050,9 @@ proc MOV_C6 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, 0000_0000_0000_0111b
-        test          eax, eax
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, 0000_0000_0000_0111b
+        test          ecx, ecx
         jnz           .Unknown
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
@@ -1069,9 +1080,9 @@ proc MOV_C7 stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, 0000_0000_0000_0111b
-        test          eax, eax
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, 0000_0000_0000_0111b
+        test          ecx, ecx
         jnz           .Unknown
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
@@ -1088,15 +1099,15 @@ proc MOV_C7 stru, bt
 endp
 
 proc MOV_REG_CONST stru, bt
-        mov           eax, [bt]
+        mov           ecx, [bt]
         mov           edx, [stru]
         mov           [edx + Instructions.opcode], MOV_OPCODE
-        and           eax, 0000_0111b
+        and           ecx, 0000_0111b
         mov           [edx + Instructions.optype1], REGISTER
-        or            byte[edx + Instructions.optype1], al
-        mov           eax, [bt]
-        and           eax, 0000_1000b
-        cmp           eax, 0000_0000b
+        or            byte[edx + Instructions.optype1], cl
+        mov           ecx, [bt]
+        and           ecx, 0000_1000b
+        cmp           ecx, 0000_0000b
         jne           @F
         or            [edx + Instructions.optype1], SIZE_8
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
@@ -1133,17 +1144,16 @@ proc MOV_8E stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, 0000_0000_0000_0100b
-        test          eax, eax
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, 0000_0000_0000_0100b
+        test          ecx, ecx
         jnz           .Unknown
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, 0000_0000_0000_0011b
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, 0000_0000_0000_0011b
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
-        mov           [edx + Instructions.optype1], ax
+        mov           [edx + Instructions.optype1], cx
         or            [edx + Instructions.optype1], SIZE_16 or SEGMENT_REG or FIN_BIT
         mov           [edx + Instructions.optype3], 0
-        ;mov           [edx + Instructions.const],0
         mov           [edx + Instructions.flags],FLAG_MODRM
         jmp           .EndProc
 
@@ -1166,14 +1176,14 @@ proc MOV_8C stru, bt
         jmp           .EndProc
 
 .PostProcess:
-        movzx         eax, word[edx + Instructions.optype1]
-        and           eax, 0000_0000_0000_0100b
-        test          eax, eax
+        movzx         ecx, word[edx + Instructions.optype1]
+        and           ecx, 0000_0000_0000_0100b
+        test          ecx, ecx
         jnz           .Unknown
         movzx         eax, word[edx + Instructions.optype1]
         and           eax, 0000_0000_0000_0011b
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
-        mov           [edx + Instructions.optype2], ax
+        mov           [edx + Instructions.optype2], cx
         or            [edx + Instructions.optype2], SIZE_16 or SEGMENT_REG or FIN_BIT
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0

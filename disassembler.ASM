@@ -9,6 +9,7 @@
 
 MODE_16           =      0000_0001b
 MODE_32           =      0000_0010b
+MASK_MODE         =      0000_0011b
 
 REGISTER          =      0000_0000b
 MEMORY            =      0010_0000b
@@ -208,21 +209,78 @@ proc WriteFileProc uses ebx, stru, handle
 
 endp
 
-proc OpPrint uses ebx, optype,handle, stru
+proc OpPrint uses edi, optype,handle, stru
+        mov           edi, [stru]
         movzx         eax, word[optype]
         and           eax, MASK_OPTYPE
         cmp           eax, REGISTER
         jne           .Mem
+        cmp           [edi + Instructions.pref_66], 0
+        jz            @F
+        xor           [flag], MASK_MODE
+        stdcall       RegPrint, [optype], [handle], [stru]
+        xor           [flag], MASK_MODE
+        jmp           .EndProc
+
+@@:
         stdcall       RegPrint, [optype], [handle], [stru]
         jmp           .EndProc
+
 .Mem:
         cmp           eax, MEMORY
         jne           .Const
+        movzx         eax, word[optype]
+        and           eax, MASK_SIZE
+        cmp           eax, SIZE_8
+        je            .size8
+        cmp           [edi + Instructions.pref_66], 0
+        jz            @F
+        xor           [flag], MASK_MODE
+
+@@:
+        cmp           [flag], MODE_16
+        jne           .size32
+        stdcall       WriteStr,wstr,[handle]
+        jmp           @F
+
+.size32:
+        stdcall       WriteStr,dstr,[handle]
+
+@@:
+        cmp           [edi + Instructions.pref_66], 0
+        jz            @F
+        xor           [flag], MASK_MODE
+        jmp           @F
+
+.size8:
+        stdcall       WriteStr,bstr,[handle]
+
+@@:
+        stdcall       WriteStr,opbr,[handle]
+        cmp           [edi + Instructions.pref_67], 0
+        jz            @F
+        xor           [flag], MASK_MODE
         stdcall       MemPrint, [optype], [handle], [stru]
+        xor           [flag], MASK_MODE
+        stdcall       WriteStr,clbr,[handle]
+        jmp           .EndProc
+
+@@:
+        stdcall       MemPrint, [optype], [handle], [stru]
+        stdcall       WriteStr,clbr,[handle]
         jmp           .EndProc
 
 .Const:
+        cmp           [edi + Instructions.pref_66], 0
+        jz            @F
+        xor           [flag], MASK_MODE
         stdcall       ConstPrint, [optype], [handle], [stru]
+        xor           [flag], MASK_MODE
+        jmp           .EndProc
+
+@@:
+        stdcall       ConstPrint, [optype], [handle], [stru]
+
 .EndProc:
         ret
 endp
@@ -312,23 +370,6 @@ endp
 
 proc MemPrint uses ebx esi, optype, handle, stru
         mov           ebx, [stru]
-        movzx         eax, word[optype]
-        and           eax, MASK_SIZE
-        cmp           eax, SIZE_8
-        je            .size8
-        cmp           [flag], MODE_16
-        jne           .size32
-        stdcall       WriteStr,wstr,[handle]
-        jmp           .Mem
-
-.size32:
-        stdcall       WriteStr,dstr,[handle]
-        jmp           .Mem
-
-.size8:
-        stdcall       WriteStr,bstr,[handle]
-.Mem:
-        stdcall       WriteStr,opbr,[handle]
         mov           edx, 12
         movzx         eax, word[optype]
         and           ax, MASK_MOD or MASK_OPER
@@ -468,7 +509,6 @@ proc MemPrint uses ebx esi, optype, handle, stru
         stdcall       WriteStr,fourb,[handle]
 
 .EndProc:
-        stdcall       WriteStr,clbr,[handle]
         ret
 endp
 
@@ -520,10 +560,16 @@ endp
 
 proc Avto uses esi ebx edi, start, stru, endMas
 
+        locals
+         prefSt        dd      ?
+        endl
+
         mov           esi, [start]
         movzx         ebx, byte[esi]
         mov           edi, [stru]
-        mov           byte[edi + Instructions.flags], 0
+        mov           [edi + Instructions.flags], 0
+        mov           [edi + Instructions.pref_66], 0
+        mov           [edi + Instructions.pref_67], 0
 
         cmp           [T1 + ebx*4], 0
         jne           .Opcode
@@ -533,30 +579,57 @@ proc Avto uses esi ebx edi, start, stru, endMas
         jmp           .StateModRM
 
 .Opcode:
+        xor           eax, eax
         stdcall       [T1 + ebx*4], [stru], [esi]
+        mov           [prefSt], esi
+        cmp           eax, 0
+        jz            @F
+        inc           esi
+        movzx         ebx, byte[esi]
+        jmp           .Opcode
+
+@@:
         cmp           [edi + Instructions.opcode], UNKNOWN_OPCODE
         je            .StateModRM
         inc           esi
 
 .StateModRM:
-        movzx         edx, byte[edi + Instructions.flags]
+        movzx         edx, [edi + Instructions.flags]
         test          edx, FLAG_MODRM
         jz            .StateConst
+        cmp           [edi + Instructions.pref_67], 0
+        jz            @F
+        xor           [flag],MASK_MODE
+        stdcall       ModRM, esi, [stru]
+        xor           [flag], MASK_MODE
+        add           esi, eax
+        jmp           .StateConst
+
+@@:
         stdcall       ModRM, esi, [stru]
         add           esi, eax
 
 .StateConst:
-        movzx         edx, byte[edi + Instructions.flags]
+        movzx         edx, [edi + Instructions.flags]
         test          edx, FLAG_IMM
         jz            .PostProcess
+        cmp           [edi + Instructions.pref_66], 0
+        jz            @F
+        xor           [flag], MASK_MODE
+        stdcall       Const, esi, [stru]
+        xor           [flag], MASK_MODE
+        add           esi, eax
+        jmp           .PostProcess
+
+@@:
         stdcall       Const, esi, [stru]
         add           esi, eax
 
 .PostProcess:
-        movzx         edx, byte[edi + Instructions.flags]
+        movzx         edx, [edi + Instructions.flags]
         test          edx, FLAG_POST_PROCESS
         jz            .EndProc
-        mov           esi, [start]
+        mov           esi, [prefSt]
         jmp           .Opcode
 
 .EndProc:
@@ -818,7 +891,7 @@ dstr                         du      "dword",0
 entstr                       dw      13, 10,0
 T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,PUSH_SEG,POP_SEG,OR_08,OR_09,OR_0A,OR_0B,OR_0C,OR_0D,PUSH_SEG,POP_SEG,ADC_10,ADC_11,ADC_12,ADC_13,ADC_14,ADC_15,PUSH_SEG,POP_SEG,SBB_18,SBB_19,SBB_1A,\
                                      SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39,\
-                                     CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,8 dup INC_REG,8 dup DEC_REG,8 dup PUSH_REG,8 dup POP_REG,6 dup 0,0,0, 8 dup 0,JO_70,JNO_71,JB_72,JAE_73,JZ_74,JNZ_75,JBE_76,JA_77,JS_78,JNS_79,\
+                                     CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,8 dup INC_REG,8 dup DEC_REG,8 dup PUSH_REG,8 dup POP_REG,6 dup 0,PREF_66,PREF_67, 8 dup 0,JO_70,JNO_71,JB_72,JAE_73,JZ_74,JNZ_75,JBE_76,JA_77,JS_78,JNS_79,\
                                      JP_7A,JNP_7B,JL_7C,JGE_7D,JLE_7E,JG_7F,GRP_80,GRP_81,0,GRP_83,TEST_84,TEST_85,XCHG_86,XCHG_87,MOV_88,MOV_89, MOV_8A, MOV_8B,MOV_8C,0,MOV_8E,0,\
                                      8 dup XCHG_AX,0,0,CALL_9A,5 dup 0,0,0,0,0,MOVSB_A4,MOVSW_A5,CMPSB_A6,CMPSW_A7,0,0,STOSB_AA,STOSW_AB,LODSB_AC,LODSW_AD,SCASB_AE,SCASW_AF,\
                                      16 dup MOV_REG_CONST,0,0,0,RET_C3,0,0,MOV_C6,MOV_C7,0,0,0,0,INT_CC,\

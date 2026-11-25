@@ -7,6 +7,10 @@ optype3         dw       ?
 memSh           dd       ?
 SIBbyte         db       ?
 const           dd       ?
+;pref_gr1        db       0
+;pref_seg        db       0
+pref_66         db       ?
+pref_67         db       ?
 ends
 
 UNKNOWN_OPCODE         =       $00

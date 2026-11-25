@@ -1,7 +1,5 @@
 struct Instructions
-hasImm          db       ?
-hasModRM        db       ?
-PostProcess     db       ?
+flags           db       ?
 opcode          dw       ?
 optype1         dw       ?
 optype2         dw       ?

@@ -7,43 +7,47 @@
         include         'Units\Instructions.h'
         include         'Units\window.h'
 
-MODE_16          =      0000_0001b
-MODE_32          =      0000_0010b
+MODE_16           =      0000_0001b
+MODE_32           =      0000_0010b
 
-REGISTER         =      0000_0000b
-MEMORY           =      0010_0000b
-CONST            =      0011_0000b
-SEGMENT_REG      =      0000_1000b
+REGISTER          =      0000_0000b
+MEMORY            =      0010_0000b
+CONST             =      0011_0000b
+SEGMENT_REG       =      0000_1000b
 
-SIGN_CONST       =      0000_0100_0000_0000b
-FIN_BIT          =      0000_1000_0000_0000b
+SIGN_CONST        =      0000_0100_0000_0000b
+FIN_BIT           =      0000_1000_0000_0000b
 
-SIZE_DEF         =      0000_0010_0000_0000b
-SIZE_8           =      0000_0001_0000_0000b
-SIZE_16          =      0000_0010_0000_0000b
-SIZE_32          =      0000_0011_0000_0000b
+SIZE_DEF          =      0000_0010_0000_0000b
+SIZE_8            =      0000_0001_0000_0000b
+SIZE_16           =      0000_0010_0000_0000b
+SIZE_32           =      0000_0011_0000_0000b
 
-REG_AL           =      0000_0001_0000_0000b
-REG_AX           =      0000_0010_0000_0000b
-REG_CL           =      0000_0001_0000_0001b
+REG_AL            =      0000_0001_0000_0000b
+REG_AX            =      0000_0010_0000_0000b
+REG_CL            =      0000_0001_0000_0001b
 
-MASK_OPER        =      0000_0111b
-MASK_SEGREG      =      0000_1000b
-MASK_OPTYPE      =      0011_0000b
-MASK_MOD         =      1100_0000b
-MASK_SIZE        =      0000_0011_0000_0000b
-MASK_SIGN        =      0000_0100_0000_0000b
+FLAG_MODRM        =      0000_0001b
+FLAG_IMM          =      0000_0010b
+FLAG_POST_PROCESS =      0000_0100b
 
-MASK_REG         =      0011_1000b
-MASK_MEM         =      0000_0111b
+MASK_OPER         =      0000_0111b
+MASK_SEGREG       =      0000_1000b
+MASK_OPTYPE       =      0011_0000b
+MASK_MOD          =      1100_0000b
+MASK_SIZE         =      0000_0011_0000_0000b
+MASK_SIGN         =      0000_0100_0000_0000b
 
-MASK_BP          =      0000_0110b
-MASK_EBP         =      0000_0101b
-MASK_SIB         =      0000_0100b
+MASK_REG          =      0011_1000b
+MASK_MEM          =      0000_0111b
 
-MASK_INDEX       =      0011_1000b
-MASK_BASE        =      0000_0111b
-MASK_SS          =      1100_0000b
+MASK_BP           =      0000_0110b
+MASK_EBP          =      0000_0101b
+MASK_SIB          =      0000_0100b
+
+MASK_INDEX        =      0011_1000b
+MASK_BASE         =      0000_0111b
+MASK_SS           =      1100_0000b
 
 
 section '.code' code readable writeable executable
@@ -519,6 +523,7 @@ proc Avto uses esi ebx edi, start, stru, endMas
         mov           esi, [start]
         movzx         ebx, byte[esi]
         mov           edi, [stru]
+        mov           byte[edi + Instructions.flags], 0
 
         cmp           [T1 + ebx*4], 0
         jne           .Opcode
@@ -534,22 +539,23 @@ proc Avto uses esi ebx edi, start, stru, endMas
         inc           esi
 
 .StateModRM:
-        cmp           [edi + Instructions.hasModRM], 1
-        jne           .StateConst
+        movzx         edx, byte[edi + Instructions.flags]
+        test          edx, FLAG_MODRM
+        jz            .StateConst
         stdcall       ModRM, esi, [stru]
         add           esi, eax
-        mov           [edi + Instructions.hasModRM], 0
 
 .StateConst:
-        cmp           [edi + Instructions.hasImm], 1
-        jne           .PostProcess
+        movzx         edx, byte[edi + Instructions.flags]
+        test          edx, FLAG_IMM
+        jz            .PostProcess
         stdcall       Const, esi, [stru]
         add           esi, eax
-        mov           [edi + Instructions.hasImm], 0
 
 .PostProcess:
-        cmp           [edi + Instructions.PostProcess], 1
-        jne           .EndProc
+        movzx         edx, byte[edi + Instructions.flags]
+        test          edx, FLAG_POST_PROCESS
+        jz            .EndProc
         mov           esi, [start]
         jmp           .Opcode
 
@@ -812,12 +818,10 @@ dstr                         du      "dword",0
 entstr                       dw      13, 10,0
 T1                           dd      ADD_00,ADD_01,ADD_02,ADD_03,ADD_04,ADD_05,PUSH_SEG,POP_SEG,OR_08,OR_09,OR_0A,OR_0B,OR_0C,OR_0D,PUSH_SEG,POP_SEG,ADC_10,ADC_11,ADC_12,ADC_13,ADC_14,ADC_15,PUSH_SEG,POP_SEG,SBB_18,SBB_19,SBB_1A,\
                                      SBB_1B,SBB_1C,SBB_1D,PUSH_SEG,POP_SEG,AND_20,AND_21,AND_22,AND_23,AND_24,AND_25,0,0,SUB_28,SUB_29,SUB_2A,SUB_2B,SUB_2C,SUB_2D,0,0,XOR_30,XOR_31,XOR_32,XOR_33,XOR_34,XOR_35,0,0,CMP_38,CMP_39,\
-                                     CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,INC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,DEC_REG,PUSH_REG,PUSH_REG,PUSH_REG,\
-                                     PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,PUSH_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG,POP_REG, 16 dup 0,JO_70,JNO_71,JB_72,JAE_73,JZ_74,JNZ_75,JBE_76,JA_77,JS_78,JNS_79,\
+                                     CMP_3A,CMP_3B,CMP_3C,CMP_3D,0,0,8 dup INC_REG,8 dup DEC_REG,8 dup PUSH_REG,8 dup POP_REG,6 dup 0,0,0, 8 dup 0,JO_70,JNO_71,JB_72,JAE_73,JZ_74,JNZ_75,JBE_76,JA_77,JS_78,JNS_79,\
                                      JP_7A,JNP_7B,JL_7C,JGE_7D,JLE_7E,JG_7F,GRP_80,GRP_81,0,GRP_83,TEST_84,TEST_85,XCHG_86,XCHG_87,MOV_88,MOV_89, MOV_8A, MOV_8B,MOV_8C,0,MOV_8E,0,\
-                                     XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,XCHG_AX,0,0,CALL_9A,5 dup 0,0,0,0,0,MOVSB_A4,MOVSW_A5,CMPSB_A6,CMPSW_A7,0,0,STOSB_AA,STOSW_AB,LODSB_AC,LODSW_AD,SCASB_AE,SCASW_AF,\
-                                     MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,\
-                                     MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,MOV_REG_CONST,0,0,0,RET_C3,0,0,MOV_C6,MOV_C7,0,0,0,0,INT_CC,\
+                                     8 dup XCHG_AX,0,0,CALL_9A,5 dup 0,0,0,0,0,MOVSB_A4,MOVSW_A5,CMPSB_A6,CMPSW_A7,0,0,STOSB_AA,STOSW_AB,LODSB_AC,LODSW_AD,SCASB_AE,SCASW_AF,\
+                                     16 dup MOV_REG_CONST,0,0,0,RET_C3,0,0,MOV_C6,MOV_C7,0,0,0,0,INT_CC,\
                                      INT_CD,0,0,GRP_D0,GRP_D1,GRP_D2,GRP_D3,12 dup 0,LOOPNZ_E0,LOOPZ_E1,LOOP_E2,JCXZ_E3,0,0,0,0,CALL_E8,JMP_E9,JMP_EA,JMP_EB,0,0,0,0,LOCK_F0,0,REPNE_F2,REPE_F3,0,0,GRP_F6,GRP_F7,0,0,0,0,0,0,GRP_FE,GRP_FF
 T2                           du      "al",0,0,"cl",0,0,"dl",0,0,"bl",0,0,"ah",0,0,"ch",0,0,"dh",0,0,"bh",0,0
 T3                           du      "ax",0,0,"cx",0,0,"dx",0,0,"bx",0,0,"sp",0,0,"bp",0,0,"si",0,0,"di",0,0

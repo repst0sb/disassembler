@@ -5,22 +5,19 @@ proc UNKNOWN stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags], FLAG_IMM
         ret
 endp
 
 proc GRP_80 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], ADD_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           byte[edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -31,9 +28,7 @@ proc GRP_80 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],1
+        mov           byte[edx + Instructions.flags], FLAG_IMM or FLAG_MODRM
 
 .EndProc:
         ret
@@ -41,14 +36,13 @@ endp
 
 proc GRP_81 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], ADD_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -59,9 +53,7 @@ proc GRP_81 stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags], FLAG_IMM or FLAG_MODRM
 
 .EndProc:
         ret
@@ -69,14 +61,13 @@ endp
 
 proc GRP_83 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], ADD_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -93,9 +84,7 @@ proc GRP_83 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST or SIGN_CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags], FLAG_IMM or FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -107,14 +96,13 @@ endp
 
 proc GRP_D0 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], ROL_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -127,9 +115,7 @@ proc GRP_D0 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],1
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],0
+        mov           [edx + Instructions.flags],FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -141,14 +127,13 @@ endp
 
 proc GRP_D1 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], ROL_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -161,9 +146,7 @@ proc GRP_D1 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],1
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],0
+        mov           [edx + Instructions.flags],FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -175,14 +158,13 @@ endp
 
 proc GRP_D2 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], ROL_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -195,9 +177,7 @@ proc GRP_D2 stru, bt
         mov           [edx + Instructions.optype2], REG_CL or FIN_BIT
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],0
+        mov           [edx + Instructions.flags],FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -209,14 +189,13 @@ endp
 
 proc GRP_D3 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], ROL_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -229,9 +208,7 @@ proc GRP_D3 stru, bt
         mov           [edx + Instructions.optype2], REG_CL or FIN_BIT
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],0
+        mov           [edx + Instructions.flags],FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -243,14 +220,13 @@ endp
 
 proc GRP_F6 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], TEST_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -262,17 +238,15 @@ proc GRP_F6 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         cmp           ax, 0
         jnz           .Opt1
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
-        mov           [edx + Instructions.hasImm],1
+        or            [edx + Instructions.flags],FLAG_IMM
         jmp           .EndProc
 
 .Opt1:
         mov           [edx + Instructions.optype2], 0
-        mov           [edx + Instructions.hasImm],0
         jmp           .EndProc
 
 .Unknown:
@@ -284,14 +258,13 @@ endp
 
 proc GRP_F7 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], TEST_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -303,17 +276,15 @@ proc GRP_F7 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         cmp           ax, 0
         jnz           .Opt1
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
-        mov           [edx + Instructions.hasImm],1
+        or            [edx + Instructions.flags],FLAG_IMM
         jmp           .EndProc
 
 .Opt1:
         mov           [edx + Instructions.optype2], 0
-        mov           [edx + Instructions.hasImm],0
         jmp           .EndProc
 
 .Unknown:
@@ -325,14 +296,13 @@ endp
 
 proc GRP_FE stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], INC_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -346,10 +316,8 @@ proc GRP_FE stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],0
+       ; mov           [edx + Instructions.const],0
+        mov           [edx + Instructions.flags], FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -361,14 +329,13 @@ endp
 
 proc GRP_FF stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], INC_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags], FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -394,10 +361,8 @@ proc GRP_FF stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],0
+        ;mov           [edx + Instructions.const],0
+        mov           [edx + Instructions.flags], FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -413,7 +378,8 @@ proc ADD_00 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags], FLAG_MODRM
+        ;mov           [edx + Instructions.hasModRM],1
         ret
 endp
 
@@ -423,7 +389,7 @@ proc ADD_01 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags], FLAG_MODRM
         ret
 endp
 
@@ -433,7 +399,7 @@ proc ADD_02 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags], FLAG_MODRM
         ret
 endp
 
@@ -443,7 +409,7 @@ proc ADD_03 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags], FLAG_MODRM
         ret
 endp
 
@@ -454,7 +420,7 @@ proc ADD_04 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags], FLAG_IMM
         ret
 endp
 
@@ -465,7 +431,7 @@ proc ADD_05 stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags], FLAG_IMM
         ret
 endp
 
@@ -475,7 +441,7 @@ proc OR_08 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags], FLAG_MODRM
         ret
 endp
 
@@ -485,7 +451,7 @@ proc OR_09 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -495,7 +461,7 @@ proc OR_0A stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -505,7 +471,7 @@ proc OR_0B stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -516,7 +482,7 @@ proc OR_0C stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -527,7 +493,7 @@ proc OR_0D stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -537,7 +503,7 @@ proc ADC_10 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -547,7 +513,7 @@ proc ADC_11 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -557,7 +523,7 @@ proc ADC_12 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -567,7 +533,7 @@ proc ADC_13 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -578,7 +544,7 @@ proc ADC_14 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -589,7 +555,7 @@ proc ADC_15 stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -599,7 +565,7 @@ proc SBB_18 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -609,7 +575,7 @@ proc SBB_19 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -619,7 +585,7 @@ proc SBB_1A stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -629,7 +595,7 @@ proc SBB_1B stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -640,7 +606,7 @@ proc SBB_1C stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -651,7 +617,7 @@ proc SBB_1D stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -661,7 +627,7 @@ proc AND_20 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -671,7 +637,7 @@ proc AND_21 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -681,7 +647,7 @@ proc AND_22 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -691,7 +657,7 @@ proc AND_23 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -702,7 +668,7 @@ proc AND_24 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -713,7 +679,7 @@ proc AND_25 stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -723,7 +689,7 @@ proc SUB_28 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -733,7 +699,7 @@ proc SUB_29 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -743,7 +709,7 @@ proc SUB_2A stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -753,7 +719,7 @@ proc SUB_2B stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -764,7 +730,7 @@ proc SUB_2C stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -775,7 +741,7 @@ proc SUB_2D stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -785,7 +751,7 @@ proc XOR_30 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -795,7 +761,7 @@ proc XOR_31 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -805,7 +771,7 @@ proc XOR_32 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -815,7 +781,7 @@ proc XOR_33 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -826,7 +792,7 @@ proc XOR_34 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -837,7 +803,7 @@ proc XOR_35 stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -847,7 +813,7 @@ proc CMP_38 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -857,7 +823,7 @@ proc CMP_39 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -867,7 +833,7 @@ proc CMP_3A stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -877,7 +843,7 @@ proc CMP_3B stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -888,7 +854,7 @@ proc CMP_3C stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -899,7 +865,7 @@ proc CMP_3D stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -985,7 +951,7 @@ proc XCHG_86 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -995,7 +961,7 @@ proc XCHG_87 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -1027,7 +993,7 @@ proc MOV_88 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -1037,7 +1003,7 @@ proc MOV_89 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -1047,7 +1013,7 @@ proc MOV_8A stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype2], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -1057,20 +1023,19 @@ proc MOV_8B stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype2], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
 proc MOV_C6 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], MOV_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags],FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -1082,9 +1047,7 @@ proc MOV_C6 stru, bt
         mov           [edx + Instructions.optype2], SIZE_8 or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_MODRM or FLAG_IMM
         jmp           .EndProc
 
 .Unknown:
@@ -1096,14 +1059,13 @@ endp
 
 proc MOV_C7 stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], MOV_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags],FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -1115,9 +1077,7 @@ proc MOV_C7 stru, bt
         mov           [edx + Instructions.optype2], SIZE_DEF or CONST
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_MODRM or FLAG_IMM
         jmp           .EndProc
 
 .Unknown:
@@ -1148,7 +1108,7 @@ proc MOV_REG_CONST stru, bt
 .EndProc:
         mov           [edx + Instructions.const],0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1163,14 +1123,13 @@ endp
 
 proc MOV_8E stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], MOV_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags],FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -1184,9 +1143,8 @@ proc MOV_8E stru, bt
         mov           [edx + Instructions.optype1], ax
         or            [edx + Instructions.optype1], SIZE_16 or SEGMENT_REG or FIN_BIT
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
+        ;mov           [edx + Instructions.const],0
+        mov           [edx + Instructions.flags],FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -1198,14 +1156,13 @@ endp
 
 proc MOV_8C stru, bt
         mov           edx, [stru]
-        cmp           [edx + Instructions.PostProcess], 0
-        jne           .PostProcess
+        test          byte[edx + Instructions.flags], FLAG_POST_PROCESS
+        jnz           .PostProcess
         mov           [edx + Instructions.opcode], MOV_OPCODE
         mov           [edx + Instructions.optype1], REGISTER
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
-        mov           [edx + Instructions.PostProcess], 1
+        mov           [edx + Instructions.flags],FLAG_MODRM or FLAG_POST_PROCESS
         jmp           .EndProc
 
 .PostProcess:
@@ -1220,8 +1177,7 @@ proc MOV_8C stru, bt
         or            [edx + Instructions.optype2], SIZE_16 or SEGMENT_REG or FIN_BIT
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.PostProcess], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         jmp           .EndProc
 
 .Unknown:
@@ -1238,7 +1194,7 @@ proc INT_CD stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1249,7 +1205,6 @@ proc INT_CC stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],3
-        mov           [edx + Instructions.hasImm],0
         ret
 endp
 
@@ -1377,7 +1332,7 @@ proc JMP_E9 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],3
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1388,7 +1343,7 @@ proc JMP_EA stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1399,7 +1354,7 @@ proc JMP_EB stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1410,7 +1365,7 @@ proc JZ_74 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1421,7 +1376,7 @@ proc JL_7C stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1432,7 +1387,7 @@ proc JLE_7E stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1443,7 +1398,7 @@ proc JB_72 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1454,7 +1409,7 @@ proc JBE_76 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1465,7 +1420,7 @@ proc JP_7A stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1476,7 +1431,7 @@ proc JO_70 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1487,7 +1442,7 @@ proc JS_78 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1498,7 +1453,7 @@ proc JNZ_75 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1509,7 +1464,7 @@ proc JGE_7D stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1520,7 +1475,7 @@ proc JG_7F stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1531,7 +1486,7 @@ proc JAE_73 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1542,7 +1497,7 @@ proc JA_77 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1553,7 +1508,7 @@ proc JNP_7B stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1564,7 +1519,7 @@ proc JNO_71 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1575,7 +1530,7 @@ proc JNS_79 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1586,7 +1541,7 @@ proc LOOP_E2 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1597,7 +1552,7 @@ proc LOOPZ_E1 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1608,7 +1563,7 @@ proc LOOPNZ_E0 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1619,7 +1574,7 @@ proc JCXZ_E3 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],2
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1630,7 +1585,7 @@ proc CALL_E8 stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],3
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1641,7 +1596,7 @@ proc CALL_9A stru, bt
         mov           [edx + Instructions.optype2], 0
         mov           [edx + Instructions.optype3], 0
         mov           [edx + Instructions.const],0
-        mov           [edx + Instructions.hasImm],1
+        mov           [edx + Instructions.flags],FLAG_IMM
         ret
 endp
 
@@ -1651,7 +1606,7 @@ proc TEST_84 stru, bt
         mov           [edx + Instructions.optype1], SIZE_8 or MEMORY
         mov           [edx + Instructions.optype2], SIZE_8 or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
 
@@ -1661,6 +1616,6 @@ proc TEST_85 stru, bt
         mov           [edx + Instructions.optype1], SIZE_DEF or MEMORY
         mov           [edx + Instructions.optype2], SIZE_DEF or REGISTER
         mov           [edx + Instructions.optype3], 0
-        mov           [edx + Instructions.hasModRM],1
+        mov           [edx + Instructions.flags],FLAG_MODRM
         ret
 endp
